@@ -792,6 +792,9 @@ winMouseButtonsHandle(ScreenPtr pScreen,
 void
  winEnqueueMotion(int x, int y);
 
+void
+ winEnqueueRawMotion(int dx, int dy);
+
 /*
  * winscrinit.c
  */

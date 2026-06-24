@@ -48,6 +48,14 @@
 #include "xserver-properties.h"
 #include "inpututils.h"
 
+
+/* Prevent POINTER_ABSOLUTE events from generating XI_RawMotion.
+ * Only POINTER_RELATIVE events should produce XI_RawMotion for
+ * XInput2 relative-mode clients (SDL2, etc.). */
+#ifndef POINTER_NORAW
+#define POINTER_NORAW 0x20
+#endif
+
 /* Peek the internal button mapping */
 static CARD8 const *g_winMouseButtonMap = NULL;
 
@@ -119,6 +127,21 @@ winMouseProc(DeviceIntPtr pDeviceInt, int iState)
                                 btn_labels,
                                 (PtrCtrlProcPtr)NoopDDA,
                                 GetMotionHistorySize(), 2, axes_labels);
+
+        /* XInput2 clients query the master pointer's valuator mode
+         * (Virtual core pointer, device 2) to determine how to
+         * interpret XI_RawMotion values. Mode must be Relative for
+         * SDL2 relative mouse mode to work correctly.
+         * The slave (Windows pointer, device 6) mode is set
+         * automatically by InitPointerDeviceStruct, but the master
+         * mode must be updated explicitly.
+         */
+        if (inputInfo.pointer && inputInfo.pointer->valuator &&
+            inputInfo.pointer->valuator->numAxes >= 2) {
+            inputInfo.pointer->valuator->axes[0].mode = Relative;
+            inputInfo.pointer->valuator->axes[1].mode = Relative;
+        }
+
         free(map);
 
         g_winMouseButtonMap = pDeviceInt->button->map;
@@ -333,11 +356,38 @@ winEnqueueMotion(int x, int y)
     int valuators[2];
     ValuatorMask mask;
 
+    valuator_mask_zero(&mask);
+
     valuators[0] = x;
     valuators[1] = y;
 
     valuator_mask_set_range(&mask, 0, 2, valuators);
     QueuePointerEvents(g_pwinPointer, MotionNotify, 0,
-                       POINTER_ABSOLUTE | POINTER_SCREEN, &mask);
+                       POINTER_ABSOLUTE | POINTER_SCREEN | POINTER_NORAW, &mask);
+                       /* ADD POINTER_NORAW */
 
+}
+
+/*
+ * Enqueue a raw motion event with relative coordinates.
+ *
+ * WM_INPUT delivers hardware-level relative displacement (lLastX/Y)
+ * via GetRawInputData. We inject it into the X server's
+ * POINTER_RELATIVE pipeline so XInput2 generates XI_RawMotion
+ * events for clients in relative mouse mode.
+ */
+void
+winEnqueueRawMotion(int dx, int dy)
+{
+    int valuators[2];
+    ValuatorMask mask;
+
+    valuator_mask_zero(&mask);
+
+    valuators[0] = dx;
+    valuators[1] = dy;
+
+    valuator_mask_set_range(&mask, 0, 2, valuators);
+    QueuePointerEvents(g_pwinPointer, MotionNotify, 0,
+                       POINTER_RELATIVE, &mask);
 }

@@ -223,6 +223,27 @@ winWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             winInitNotifyIcon(s_pScreenPriv,FALSE);
         }
+
+        /* Register for WM_INPUT (Raw Input) mouse events.
+         * These provide hardware-level relative displacement
+         * (lLastX/Y), independent of cursor position or screen
+         * boundaries, needed for XInput2 XI_RawMotion.
+         * dwFlags=0: receive only when focused; do NOT use
+         * RIDEV_NOLEGACY (breaks WM_MOUSEMOVE for absolute mode).
+         */
+        {
+            RAWINPUTDEVICE rid;
+            rid.usUsagePage = 0x01;       /* Generic Desktop Controls */
+            rid.usUsage = 0x02;           /* Mouse */
+            rid.dwFlags = 0;              /* Focused window only */
+            rid.hwndTarget = hwnd;
+            if (!RegisterRawInputDevices(&rid, 1, sizeof(rid))) {
+                ErrorF("winWindowProc - WM_CREATE: "
+                       "RegisterRawInputDevices failed (error %lu)\n",
+                       GetLastError());
+            }
+        }
+
         return 0;
 
     case WM_DISPLAYCHANGE:
@@ -770,6 +791,43 @@ winWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         /* Redraw the screen */
         (*s_pScreenPriv->pwinRedrawScreen) (s_pScreen);
         return 0;
+    }
+
+    case WM_INPUT:
+    {
+        RAWINPUT raw;
+        UINT rawSize = sizeof(raw);
+
+        /* We can't do anything without privates or pointer */
+        if (s_pScreenPriv == NULL || s_pScreenInfo->fIgnoreInput)
+            break;
+        if (g_pwinPointer == NULL)
+            break;
+
+        if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, &raw,
+                            &rawSize, sizeof(RAWINPUTHEADER)) == (UINT)-1) {
+            ErrorF("winWindowProc - WM_INPUT: GetRawInputData failed\n");
+            break;
+        }
+
+        if (raw.header.dwType == RIM_TYPEMOUSE) {
+            LONG dx = raw.data.mouse.lLastX;
+            LONG dy = raw.data.mouse.lLastY;
+
+            if (dx != 0 || dy != 0) {
+                /* Filter absolute-position devices (touchscreens,
+                 * tablets). They use the same Raw Input API but
+                 * deliver absolute coordinates, not relative deltas. */
+                if (!(raw.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE)) {
+                    winEnqueueRawMotion((int)dx, (int)dy);
+                }
+            }
+        }
+
+        /* Must break (not return 0) so DefWindowProc cleans up
+         * Raw Input resources. Return 0 causes resource leak and
+         * eventual Raw Input failure. */
+        break;
     }
 
     case WM_MOUSEMOVE:
