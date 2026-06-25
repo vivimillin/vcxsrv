@@ -59,6 +59,131 @@
 /* Peek the internal button mapping */
 static CARD8 const *g_winMouseButtonMap = NULL;
 
+/* Master device grab callback hooks (for Core XGrabPointer) */
+static void (*winOrigMasterActivateGrab)(DeviceIntPtr, GrabPtr, TimeStamp, Bool) = NULL;
+static void (*winOrigMasterDeactivateGrab)(DeviceIntPtr) = NULL;
+
+/* Slave device grab callback hooks (for XI2 XGrabDevice) */
+static void (*winOrigSlaveActivateGrab)(DeviceIntPtr, GrabPtr, TimeStamp, Bool) = NULL;
+static void (*winOrigSlaveDeactivateGrab)(DeviceIntPtr) = NULL;
+
+/* Grab nesting depth counter */
+static int winGrabDepth = 0;
+
+/*
+ * Apply cursor constraint to foreground window
+ */
+static void
+winApplyCursorConstraint(void)
+{
+    HWND hwnd;
+    RECT rect;
+
+    hwnd = GetForegroundWindow();
+    if (!hwnd)
+        return;
+
+    GetClientRect(hwnd, &rect);
+    ClientToScreen(hwnd, (LPPOINT)&rect.left);
+    ClientToScreen(hwnd, (LPPOINT)&rect.right);
+    ClipCursor(&rect);
+}
+
+/*
+ * Release cursor constraint
+ */
+static void
+winReleaseCursorConstraint(void)
+{
+    ClipCursor(NULL);
+}
+
+/*
+ * Force-hide cursor during grab
+ */
+static void
+winGrabHideCursor(void)
+{
+    while (ShowCursor(FALSE) >= 0)
+        ;
+}
+
+/*
+ * Force-show cursor after grab release
+ */
+static void
+winGrabShowCursor(void)
+{
+    while (ShowCursor(TRUE) < 0)
+        ;
+}
+
+/*
+ * Master device ActivateGrab hook.
+ * SDL2 X11 backend uses XGrabPointer (Core protocol), which operates
+ * on the MASTER pointer device. This hook handles that path.
+ */
+static void
+winMasterActivateGrab(DeviceIntPtr dev, GrabPtr grab, TimeStamp time, Bool autoGrab)
+{
+    if (winOrigMasterActivateGrab)
+        winOrigMasterActivateGrab(dev, grab, time, autoGrab);
+
+    winGrabDepth++;
+    winApplyCursorConstraint();
+    winGrabHideCursor();
+}
+
+/*
+ * Master device DeactivateGrab hook.
+ */
+static void
+winMasterDeactivateGrab(DeviceIntPtr dev)
+{
+    winGrabDepth--;
+    if (winGrabDepth <= 0) {
+        winGrabDepth = 0;
+        winReleaseCursorConstraint();
+        winGrabShowCursor();
+    }
+
+    if (winOrigMasterDeactivateGrab)
+        winOrigMasterDeactivateGrab(dev);
+}
+
+/*
+ * Slave device ActivateGrab hook.
+ * XI2 XGrabDevice may operate on slave devices directly.
+ */
+static void
+winSlaveActivateGrab(DeviceIntPtr dev, GrabPtr grab, TimeStamp time, Bool autoGrab)
+{
+    if (winOrigSlaveActivateGrab)
+        winOrigSlaveActivateGrab(dev, grab, time, autoGrab);
+
+    winGrabDepth++;
+    winApplyCursorConstraint();
+    winGrabHideCursor();
+}
+
+/*
+ * Slave device DeactivateGrab hook.
+ */
+static void
+winSlaveDeactivateGrab(DeviceIntPtr dev)
+{
+    winGrabDepth--;
+    if (winGrabDepth <= 0) {
+        winGrabDepth = 0;
+        winReleaseCursorConstraint();
+        winGrabShowCursor();
+    }
+
+    if (winOrigSlaveDeactivateGrab)
+        winOrigSlaveDeactivateGrab(dev);
+}
+
+
 /*
  * See Porting Layer Definition - p. 18
  * This is known as a DeviceProc
@@ -128,6 +253,23 @@ winMouseProc(DeviceIntPtr pDeviceInt, int iState)
                                 (PtrCtrlProcPtr)NoopDDA,
                                 GetMotionHistorySize(), 2, axes_labels);
 
+        /* Hook master device (for Core XGrabPointer used by SDL2) */
+        {
+            DeviceIntPtr master = inputInfo.pointer;
+            if (master && master != pDeviceInt) {
+                winOrigMasterActivateGrab = master->deviceGrab.ActivateGrab;
+                winOrigMasterDeactivateGrab = master->deviceGrab.DeactivateGrab;
+                master->deviceGrab.ActivateGrab = winMasterActivateGrab;
+                master->deviceGrab.DeactivateGrab = winMasterDeactivateGrab;
+            }
+        }
+
+        /* Hook slave device too (for XI2 XGrabDevice) */
+        winOrigSlaveActivateGrab = pDeviceInt->deviceGrab.ActivateGrab;
+        winOrigSlaveDeactivateGrab = pDeviceInt->deviceGrab.DeactivateGrab;
+        pDeviceInt->deviceGrab.ActivateGrab = winSlaveActivateGrab;
+        pDeviceInt->deviceGrab.DeactivateGrab = winSlaveDeactivateGrab;
+
         /* XInput2 clients query the master pointer's valuator mode
          * (Virtual core pointer, device 2) to determine how to
          * interpret XI_RawMotion values. Mode must be Relative for
@@ -156,6 +298,12 @@ winMouseProc(DeviceIntPtr pDeviceInt, int iState)
 
     case DEVICE_OFF:
         pDevice->on = FALSE;
+
+        if (winGrabDepth > 0) {
+            winGrabDepth = 0;
+            winReleaseCursorConstraint();
+            winGrabShowCursor();
+        }
         break;
     }
     return Success;

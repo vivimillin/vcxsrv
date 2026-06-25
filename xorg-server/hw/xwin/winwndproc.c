@@ -1088,6 +1088,14 @@ winWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         /* Remove our keyboard hook if it is installed */
         winRemoveKeyboardHookLL();
+
+        /* Safety: release cursor constraint if focus leaves while grabbed */
+        if (inputInfo.pointer && inputInfo.pointer->deviceGrab.grab) {
+            ClipCursor(NULL);
+            while (ShowCursor(TRUE) < 0)
+                ;
+        }
+
         return 0;
 
     case WM_SYSKEYDOWN:
@@ -1228,11 +1236,35 @@ winWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         /* Activate or deactivate */
         s_pScreenPriv->fActive = wParam;
 
-        /* Reshow the Windows mouse cursor if we are being deactivated */
-        if (g_fSoftwareCursor && !s_pScreenPriv->fActive && !g_fCursor) {
-            /* Show Windows cursor */
-            g_fCursor = TRUE;
-            ShowCursor(TRUE);
+        if (!s_pScreenPriv->fActive) {
+            /* DEACTIVATING */
+            if (inputInfo.pointer && inputInfo.pointer->deviceGrab.grab) {
+                ClipCursor(NULL);
+                while (ShowCursor(TRUE) < 0)
+                    ;
+            }
+            else {
+                /* Original logic: restore hover-hidden cursor */
+                if (g_fSoftwareCursor && !g_fCursor) {
+                    g_fCursor = TRUE;
+                    ShowCursor(TRUE);
+                }
+            }
+        }
+        else {
+            /* ACTIVATING */
+            if (inputInfo.pointer && inputInfo.pointer->deviceGrab.grab) {
+                HWND hwndFG = GetForegroundWindow();
+                if (hwndFG) {
+                    RECT rect;
+                    GetClientRect(hwndFG, &rect);
+                    ClientToScreen(hwndFG, (LPPOINT)&rect.left);
+                    ClientToScreen(hwndFG, (LPPOINT)&rect.right);
+                    ClipCursor(&rect);
+                }
+                while (ShowCursor(FALSE) >= 0)
+                    ;
+            }
         }
 
         /* Call engine specific screen activation/deactivation function */
