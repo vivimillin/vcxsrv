@@ -1041,6 +1041,26 @@ winWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             if (g_fButton[2] && !wR)
                 PostMessage(hwnd, WM_RBUTTONUP, wCtrl | wL | wM | wShift, lPos);
         }
+
+        case WIN_CLIPCURSOR_TIMER_ID:
+        {
+            if (inputInfo.pointer &&
+                inputInfo.pointer->deviceGrab.grab &&
+                g_hwndGrabWindow) {
+                /* Windows may silently cancel it (cursor skipping,
+                * Win key, system notifications, etc.). */
+                RECT rect;
+                GetClientRect(g_hwndGrabWindow, &rect);
+                ClientToScreen(g_hwndGrabWindow, (LPPOINT)&rect.left);
+                ClientToScreen(g_hwndGrabWindow, (LPPOINT)&rect.right);
+                /* 1px padding: keep cursor away from sizing border */
+                rect.left   += 1;
+                rect.top    += 1;
+                rect.right  -= 1;
+                rect.bottom -= 1;
+                ClipCursor(&rect);
+            }
+        }
         }
         return 0;
 
@@ -1088,13 +1108,6 @@ winWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         /* Remove our keyboard hook if it is installed */
         winRemoveKeyboardHookLL();
-
-        /* Safety: release cursor constraint if focus leaves while grabbed */
-        if (inputInfo.pointer && inputInfo.pointer->deviceGrab.grab) {
-            ClipCursor(NULL);
-            while (ShowCursor(TRUE) < 0)
-                ;
-        }
 
         return 0;
 
@@ -1254,12 +1267,16 @@ winWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         else {
             /* ACTIVATING */
             if (inputInfo.pointer && inputInfo.pointer->deviceGrab.grab) {
-                HWND hwndFG = GetForegroundWindow();
-                if (hwndFG) {
+                if (g_hwndGrabWindow) {
                     RECT rect;
-                    GetClientRect(hwndFG, &rect);
-                    ClientToScreen(hwndFG, (LPPOINT)&rect.left);
-                    ClientToScreen(hwndFG, (LPPOINT)&rect.right);
+                    GetClientRect(g_hwndGrabWindow, &rect);
+                    ClientToScreen(g_hwndGrabWindow, (LPPOINT)&rect.left);
+                    ClientToScreen(g_hwndGrabWindow, (LPPOINT)&rect.right);
+                    /* 1px padding: keep cursor away from sizing border */
+                    rect.left   += 1;
+                    rect.top    += 1;
+                    rect.right  -= 1;
+                    rect.bottom -= 1;
                     ClipCursor(&rect);
                 }
                 while (ShowCursor(FALSE) >= 0)

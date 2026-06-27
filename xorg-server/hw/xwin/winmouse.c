@@ -48,6 +48,7 @@
 #include "xserver-properties.h"
 #include "inpututils.h"
 
+#include "winwindow.h"   /* for winGetWindowPriv, winPrivWinRec */
 
 /* Prevent POINTER_ABSOLUTE events from generating XI_RawMotion.
  * Only POINTER_RELATIVE events should produce XI_RawMotion for
@@ -70,6 +71,12 @@ static void (*winOrigSlaveDeactivateGrab)(DeviceIntPtr) = NULL;
 /* Grab nesting depth counter */
 static int winGrabDepth = 0;
 
+/* HWND of the vcxsrv window that currently has the mouse. */
+HWND g_hwndGrabWindow = NULL;
+
+/* Timer ID for periodic ClipCursor re-apply */
+static UINT_PTR g_grabTimerId = 0;
+
 /*
  * Apply cursor constraint to foreground window
  */
@@ -79,13 +86,20 @@ winApplyCursorConstraint(void)
     HWND hwnd;
     RECT rect;
 
-    hwnd = GetForegroundWindow();
+    hwnd = g_hwndGrabWindow;
+    if (!hwnd)
+        hwnd = GetForegroundWindow();
     if (!hwnd)
         return;
 
     GetClientRect(hwnd, &rect);
     ClientToScreen(hwnd, (LPPOINT)&rect.left);
     ClientToScreen(hwnd, (LPPOINT)&rect.right);
+    /* 1px padding: keep cursor away from sizing border */
+    rect.left   += 1;
+    rect.top    += 1;
+    rect.right  -= 1;
+    rect.bottom -= 1;
     ClipCursor(&rect);
 }
 
@@ -130,7 +144,23 @@ winMasterActivateGrab(DeviceIntPtr dev, GrabPtr grab, TimeStamp time, Bool autoG
         winOrigMasterActivateGrab(dev, grab, time, autoGrab);
 
     winGrabDepth++;
-    winApplyCursorConstraint();
+    /* Only confine cursor position if grab specifies a confine window. */
+    if (grab && grab->confineTo) {
+        /* Map X11 grab window to Windows hwnd for precise constraint. */
+        WindowPtr pGrabWin = grab->confineTo ? grab->confineTo : grab->window;
+        winPrivWinPtr pWinPriv = winGetWindowPriv(pGrabWin);
+        if (pWinPriv && pWinPriv->hWnd) {
+            g_hwndGrabWindow = pWinPriv->hWnd;
+        }
+        winApplyCursorConstraint();
+        /* Windows may silently cancel ClipCursor (Win key,
+         * cursor skipping, etc.). This timer defends against it. */
+        if (!g_grabTimerId && g_hwndGrabWindow) {
+            g_grabTimerId = SetTimer(g_hwndGrabWindow, WIN_CLIPCURSOR_TIMER_ID, 10, NULL);
+        }
+    }
+
+    /* Always hide cursor during grab, regardless of confineTo */
     winGrabHideCursor();
 }
 
@@ -145,6 +175,12 @@ winMasterDeactivateGrab(DeviceIntPtr dev)
         winGrabDepth = 0;
         winReleaseCursorConstraint();
         winGrabShowCursor();
+
+        /* Stop periodic timer */
+        if (g_grabTimerId) {
+            KillTimer(g_hwndGrabWindow, g_grabTimerId);
+            g_grabTimerId = 0;
+        }
     }
 
     if (winOrigMasterDeactivateGrab)
@@ -162,7 +198,21 @@ winSlaveActivateGrab(DeviceIntPtr dev, GrabPtr grab, TimeStamp time, Bool autoGr
         winOrigSlaveActivateGrab(dev, grab, time, autoGrab);
 
     winGrabDepth++;
-    winApplyCursorConstraint();
+    /* Only confine cursor position if grab specifies a confine window. */
+    if (grab && grab->confineTo) {
+        /* Map X11 grab window to Windows hwnd for precise constraint. */
+        WindowPtr pGrabWin = grab->confineTo ? grab->confineTo : grab->window;
+        winPrivWinPtr pWinPriv = winGetWindowPriv(pGrabWin);
+        if (pWinPriv && pWinPriv->hWnd) {
+            g_hwndGrabWindow = pWinPriv->hWnd;
+        }
+        winApplyCursorConstraint();
+        /* Windows may silently cancel ClipCursor (Win key,
+         * cursor skipping, etc.). This timer defends against it. */
+        if (!g_grabTimerId && g_hwndGrabWindow) {
+            g_grabTimerId = SetTimer(g_hwndGrabWindow, WIN_CLIPCURSOR_TIMER_ID, 10, NULL);
+        }
+    }
     winGrabHideCursor();
 }
 
@@ -177,6 +227,12 @@ winSlaveDeactivateGrab(DeviceIntPtr dev)
         winGrabDepth = 0;
         winReleaseCursorConstraint();
         winGrabShowCursor();
+
+        /* Stop periodic timer */
+        if (g_grabTimerId) {
+            KillTimer(g_hwndGrabWindow, g_grabTimerId);
+            g_grabTimerId = 0;
+        }
     }
 
     if (winOrigSlaveDeactivateGrab)
