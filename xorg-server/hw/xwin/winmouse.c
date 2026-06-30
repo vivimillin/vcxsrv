@@ -68,9 +68,6 @@ static void (*winOrigMasterDeactivateGrab)(DeviceIntPtr) = NULL;
 static void (*winOrigSlaveActivateGrab)(DeviceIntPtr, GrabPtr, TimeStamp, Bool) = NULL;
 static void (*winOrigSlaveDeactivateGrab)(DeviceIntPtr) = NULL;
 
-/* Grab nesting depth counter */
-static int winGrabDepth = 0;
-
 /* HWND of the vcxsrv window that currently has the mouse. */
 HWND g_hwndGrabWindow = NULL;
 
@@ -143,7 +140,6 @@ winMasterActivateGrab(DeviceIntPtr dev, GrabPtr grab, TimeStamp time, Bool autoG
     if (winOrigMasterActivateGrab)
         winOrigMasterActivateGrab(dev, grab, time, autoGrab);
 
-    winGrabDepth++;
     /* Only confine cursor position if grab specifies a confine window. */
     if (grab && grab->confineTo) {
         /* Map X11 grab window to Windows hwnd for precise constraint. */
@@ -158,10 +154,9 @@ winMasterActivateGrab(DeviceIntPtr dev, GrabPtr grab, TimeStamp time, Bool autoG
         if (!g_grabTimerId && g_hwndGrabWindow) {
             g_grabTimerId = SetTimer(g_hwndGrabWindow, WIN_CLIPCURSOR_TIMER_ID, 10, NULL);
         }
+        winGrabHideCursor();
     }
-
-    /* Always hide cursor during grab, regardless of confineTo */
-    winGrabHideCursor();
+    /* confineTo=None: no Windows-side effect */
 }
 
 /*
@@ -170,12 +165,12 @@ winMasterActivateGrab(DeviceIntPtr dev, GrabPtr grab, TimeStamp time, Bool autoG
 static void
 winMasterDeactivateGrab(DeviceIntPtr dev)
 {
-    winGrabDepth--;
-    if (winGrabDepth <= 0) {
-        winGrabDepth = 0;
+    /* dev->deviceGrab.grab points to the grab being released. */
+    GrabPtr grab = dev->deviceGrab.grab;
+    /* Confining grab: release Windows cursor state */
+    if (grab && grab->confineTo) {
         winReleaseCursorConstraint();
         winGrabShowCursor();
-
         /* Stop periodic timer */
         if (g_grabTimerId) {
             KillTimer(g_hwndGrabWindow, g_grabTimerId);
@@ -197,7 +192,6 @@ winSlaveActivateGrab(DeviceIntPtr dev, GrabPtr grab, TimeStamp time, Bool autoGr
     if (winOrigSlaveActivateGrab)
         winOrigSlaveActivateGrab(dev, grab, time, autoGrab);
 
-    winGrabDepth++;
     /* Only confine cursor position if grab specifies a confine window. */
     if (grab && grab->confineTo) {
         /* Map X11 grab window to Windows hwnd for precise constraint. */
@@ -212,9 +206,11 @@ winSlaveActivateGrab(DeviceIntPtr dev, GrabPtr grab, TimeStamp time, Bool autoGr
         if (!g_grabTimerId && g_hwndGrabWindow) {
             g_grabTimerId = SetTimer(g_hwndGrabWindow, WIN_CLIPCURSOR_TIMER_ID, 10, NULL);
         }
+        winGrabHideCursor();
     }
-    winGrabHideCursor();
+    /* confineTo=None: no Windows-side effect */
 }
+
 
 /*
  * Slave device DeactivateGrab hook.
@@ -222,12 +218,12 @@ winSlaveActivateGrab(DeviceIntPtr dev, GrabPtr grab, TimeStamp time, Bool autoGr
 static void
 winSlaveDeactivateGrab(DeviceIntPtr dev)
 {
-    winGrabDepth--;
-    if (winGrabDepth <= 0) {
-        winGrabDepth = 0;
+    /* dev->deviceGrab.grab points to the grab being released. */
+    GrabPtr grab = dev->deviceGrab.grab;
+    /* Confining grab: release Windows cursor state */
+    if (grab && grab->confineTo) {
         winReleaseCursorConstraint();
         winGrabShowCursor();
-
         /* Stop periodic timer */
         if (g_grabTimerId) {
             KillTimer(g_hwndGrabWindow, g_grabTimerId);
@@ -355,10 +351,12 @@ winMouseProc(DeviceIntPtr pDeviceInt, int iState)
     case DEVICE_OFF:
         pDevice->on = FALSE;
 
-        if (winGrabDepth > 0) {
-            winGrabDepth = 0;
-            winReleaseCursorConstraint();
-            winGrabShowCursor();
+        /* Force release cursor constraint on device shutdown */
+        winReleaseCursorConstraint();
+        winGrabShowCursor();
+        if (g_grabTimerId) {
+            KillTimer(g_hwndGrabWindow, g_grabTimerId);
+            g_grabTimerId = 0;
         }
         break;
     }
