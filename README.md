@@ -4,5 +4,6 @@ Branches:
 
 - released: contains original sources of all used packages.
 - master: contains all necessary changes to be able to compile with Visual Studio. From this branch the binary releases are built.
+- fork-pages: readme.md pages for fork 
 
 Currently compilation scripts assume they are run from a WSL terminal inside a windows folder (because a case insensitive filesystem is needed).
