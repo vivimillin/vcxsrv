@@ -140,16 +140,16 @@ MIT-style X11 license, same as upstream VcXsrv.
 
 | 补丁  | 修复内容 | 上游状态 |
 | --- | --- | --- |
-| **Raw Input 鼠标** | XInput2 `XI_RawMotion` 不生成；SDL2 相对鼠标模式失效 | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
-| **光标锁定** | `XGrabPointer` 设置 `confineTo` 无效；光标仍可见且可自由移动 | 同属 [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
+| **Raw Input 鼠标** | XInput2 `XI_RawMotion` 消息不生成；SDL2 鼠标相对模式无法工作 | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
+| **光标锁定** | `XGrabPointer` 设置 `confineTo` 无效；光标未锁定且未隐藏 | 同属 [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
 
 > 两个修复同属一个 [PR #78](https://github.com/marchaesen/vcxsrv/pull/78)，针对 [Issue #77](https://github.com/marchaesen/vcxsrv/issues/77)，是同一问题的两个方面——原始输入数据传递和配套的光标锁定/消隐行为。
 
 ### Raw Input 鼠标
 
-VcXsrv 的 Windows 输入层（`hw/xwin`）只从 `WM_MOUSEMOVE` 队列化 `POINTER_ABSOLUTE` 事件，从不生成 `XI_RawMotion`。请求相对鼠标模式的 SDL2 及其他 XInput2 客户端收不到运动数据，表现为卡死。
+VcXsrv 的 Windows 输入层（`hw/xwin`）只从 `WM_MOUSEMOVE` 队列化 `POINTER_ABSOLUTE` 事件，从不生成 `XI_RawMotion` 消息。请求相对鼠标模式的 SDL2 及其他 XInput2 客户端收不到运动数据，表现为卡死。
 
-变通方案 `SDL_MOUSE_RELATIVE_MODE_WARP=1` 可以恢复功能，但在 WSL 下会导致严重的音频卡顿（X11 往返开销）。
+变通方案 `SDL_MOUSE_RELATIVE_MODE_WARP=1` 可以恢复功能，但在 WSL 下会导致严重的音频卡顿（X11 往返时间开销导致阻塞）。
 
 此补丁：
 
@@ -160,7 +160,7 @@ VcXsrv 的 Windows 输入层（`hw/xwin`）只从 `WM_MOUSEMOVE` 队列化 `POIN
 
 ### 光标锁定与消隐
 
-VcXsrv 的 DDX 层从未为 X11 pointer grab 实现 Windows 端的光标管理。`XGrabPointer` 设置 `confine_to` 后没有任何可见效果——光标仍然可见且可自由离开窗口。
+VcXsrv 的 DDX 层从未为 X11 pointer grab 实现 Windows 端的光标管理。`XGrabPointer` 设置 `confine_to` 后没有任何可见效果——光标未如预期锁定、且未隐藏。
 
 此补丁通过 hook master/slave pointer device 的 `ActivateGrab`/`DeactivateGrab` 来：
 
