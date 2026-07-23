@@ -4,7 +4,7 @@
 
 Unofficial builds of [VcXsrv](https://github.com/marchaesen/vcxsrv) — the open-source X server for Windows — with two patch sets that close the gap between VcXsrv and a first-class WSL display server:
 
-- **Hyper-V vsock transport for WSL2** — a direct VM↔host channel that replaces the TCP / localhost-forwarding path: lower latency under input-heavy load, no firewall prompts, unaffected by VPN switching or sleep/wake, and effectively zero configuration. **This brings WSL2 display responsiveness to the level of WSLg and the commercial X410, while staying fully open source.**
+- **Hyper-V vsock transport for WSL2** — a direct VM↔host channel that replaces the TCP / localhost-forwarding path: lower latency under input-heavy load, no firewall prompts, unaffected by VPN switching or sleep/wake, and effectively zero configuration. **This puts VcXsrv's display responsiveness under WSL2 on par with WSLg and the commercial X410, while staying fully open source.**
 
 - **Relative mouse mode & cursor confinement** — hardware-level `XI_RawMotion` plus proper `XGrabPointer` confinement and hiding, **so SDL2 games, emulators, and 3D/CAD tools capture the mouse correctly**. Broken relative mouse mode is a long-standing WSL pain point — including on WSLg ([microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240), [#521](https://github.com/microsoft/wslg/issues/521)) and X410.
 
@@ -182,7 +182,7 @@ MIT-style X11 license, same as upstream VcXsrv.
 
 [VcXsrv](https://github.com/marchaesen/vcxsrv)（Windows 平台开源 X server）的非官方构建版本，包含两组补丁，补齐了 VcXsrv 成为一流 WSL 显示方案所差的两块拼图：
 
-- **WSL2 Hyper-V vsock 传输**——VM 与宿主机的直通通道，取代 TCP / localhost 转发路径：鼠标密集负载下延迟更低、无防火墙弹窗、不受 VPN 切换或睡眠唤醒影响、几乎零配置。**WSL2 显示响应达到 WSLg 和商业软件 X410 的水平，同时保持完全开源。**
+- **WSL2 Hyper-V vsock 传输**——VM 与宿主机的直通通道，取代 TCP / localhost 转发路径：鼠标密集负载下延迟更低、无防火墙弹窗、不受 VPN 切换或睡眠唤醒影响、几乎零配置。**让 VcXsrv 在 WSL2 下的显示响应达到 WSLg 和商业软件 X410 的水平，同时保持完全开源。**
 
 - **相对鼠标模式与光标锁定**——硬件级 `XI_RawMotion` 加上正确的 `XGrabPointer` 锁定与消隐，**让 SDL2 游戏、模拟器、3D/CAD 工具正确捕获鼠标**。鼠标相对模式失灵是 WSL 长期存在的痛点——WSLg（[microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240)、[#521](https://github.com/microsoft/wslg/issues/521)）和 X410 上都存在。
 
