@@ -4,7 +4,7 @@
 
 Unofficial builds of [VcXsrv](https://github.com/marchaesen/vcxsrv) — the open-source X server for Windows — with two patch sets that close the gap between VcXsrv and a first-class WSL display server:
 
-- **Hyper-V vsock transport for WSL2** — a direct VM↔host channel that replaces the TCP / localhost-forwarding path: lower latency under input-heavy load, no firewall prompts, unaffected by VPN switching or sleep/wake, and effectively zero configuration. **This puts VcXsrv's display responsiveness under WSL2 on par with WSLg and the commercial X410, while staying fully open source.**
+- **Hyper-V vsock transport for WSL2** — a direct VM↔host channel that replaces the TCP / localhost-forwarding path: lower latency under input-heavy load, unaffected by VPN switching or sleep/wake, and effectively zero configuration. **This puts VcXsrv's display responsiveness under WSL2 on par with WSLg and the commercial X410, while staying fully open source.**
 
 - **Relative mouse mode & cursor confinement** — hardware-level `XI_RawMotion` plus proper `XGrabPointer` confinement and hiding, **so SDL2 games, emulators, and 3D/CAD tools capture the mouse correctly**. Broken relative mouse mode is a long-standing WSL pain point — including on WSLg ([microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240), [#521](https://github.com/microsoft/wslg/issues/521)) and X410.
 
@@ -18,12 +18,12 @@ All patches are submitted upstream as proper PRs ([PR #78](https://github.com/ma
 
 **Anyone running Linux GUI apps on WSL2 — the vsock transport alone justifies these builds.**
 
-Upstream VcXsrv talks to WSL2 over TCP, through the NAT and localhost-forwarding layers. That path is behind several well-known annoyances: stutter under mouse-dense workloads (dragging, scrolling, SDL2 event floods), connections severed or hung after sleep/wake or Wi-Fi/VPN changes, and the Windows firewall prompt. 
+Upstream VcXsrv talks to WSL2 over TCP, through the NAT and localhost-forwarding layers. That path is behind several well-known annoyances: stutter under mouse-dense workloads (dragging, scrolling, SDL2 event floods), connections severed or hung after sleep/wake or Wi-Fi/VPN changes. 
 
 With `-vsock`, X11 traffic moves to a Hyper-V socket — a channel purpose-built for VM↔host communication that bypasses the TCP/IP stack entirely:
 
 - **Performance** — no NAT, no localhost proxy, no network-stack overhead in the data path; input-heavy workloads stop stuttering
-- **Stability** — unaffected by VPN changes, Wi-Fi roaming, adapter power saving, or sleep/wake; no firewall rules or prompts (external machines cannot reach a vsock listener)
+- **Stability** — unaffected by VPN changes, Wi-Fi roaming, adapter power saving, or sleep/wake
 - **Zero configuration, zero privileges** — the running WSL2 VM is detected automatically at startup and re-detected automatically after every WSL restart; no `DISPLAY` IP juggling, no admin rights, and no "Hyper-V Administrators" group membership — which [X410's reliable WSL2 detection requires](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)
 
 **Anyone running mouse-capturing X11 applications** — on WSL1/WSL2 or any setup using VcXsrv as the display server — gets two X11-protocol-level fixes in the Windows DDX layer (`hw/xwin`):
@@ -182,7 +182,7 @@ MIT-style X11 license, same as upstream VcXsrv.
 
 [VcXsrv](https://github.com/marchaesen/vcxsrv)（Windows 平台开源 X server）的非官方构建版本，包含两组补丁，补齐了 VcXsrv 成为一流 WSL 显示方案所差的两块拼图：
 
-- **WSL2 Hyper-V vsock 传输**——VM 与宿主机的直通通道，取代 TCP / localhost 转发路径：鼠标密集负载下延迟更低、无防火墙弹窗、不受 VPN 切换或睡眠唤醒影响、几乎零配置。**让 VcXsrv 在 WSL2 下的显示响应达到 WSLg 和商业软件 X410 的水平，同时保持完全开源。**
+- **WSL2 Hyper-V vsock 传输**——VM 与宿主机的直通通道，取代 TCP / localhost 转发路径：鼠标密集负载下延迟更低、不受 VPN 切换或睡眠唤醒影响、几乎零配置。**让 VcXsrv 在 WSL2 下的显示响应达到 WSLg 和商业软件 X410 的水平，同时保持完全开源。**
 
 - **相对鼠标模式与光标锁定**——硬件级 `XI_RawMotion` 加上正确的 `XGrabPointer` 锁定与消隐，**让 SDL2 游戏、模拟器、3D/CAD 工具正确捕获鼠标**。鼠标相对模式失灵是 WSL 长期存在的痛点——WSLg（[microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240)、[#521](https://github.com/microsoft/wslg/issues/521)）和 X410 上都存在。
 
@@ -196,12 +196,12 @@ MIT-style X11 license, same as upstream VcXsrv.
 
 **所有在 WSL2 上运行 Linux GUI 应用的用户——仅 vsock 传输一项就值得试一试。**
 
-上游 VcXsrv 经 TCP（NAT + localhost 转发）与 WSL2 通信，这条路径正是一系列已知问题的根源：鼠标密集负载下的卡顿（拖拽、滚动、SDL2 消息风暴）、睡眠唤醒或 Wi-Fi/VPN 切换后的断连或挂起、以及 Windows 防火墙弹窗。
+上游 VcXsrv 经 TCP（NAT + localhost 转发）与 WSL2 通信，这条路径正是一系列已知问题的根源：鼠标密集负载下的卡顿（拖拽、滚动、SDL2 消息风暴）、睡眠唤醒或 Wi-Fi/VPN 切换后的断连或挂起。
 
 新的 `-vsock` 实现了把 X11 流量迁移到 Hyper-V socket——一条专为 VM↔宿主机通信设计、完全绕过 TCP/IP 协议栈的通道：
 
 - **性能**——数据路径上不再有 NAT、localhost 代理和网络协议栈开销；输入密集负载不再卡顿
-- **稳定性**——不受 VPN 切换、Wi-Fi 漫游、网卡节电、睡眠唤醒的影响；无需配置防火墙规则（外部机器根本无法到达 vsock 监听）
+- **稳定性**——不受 VPN 切换、Wi-Fi 漫游、网卡节电、睡眠唤醒的影响；
 - **无需特权**——启动时自动检测运行中的 WSL2 VM，每次 WSL 重启后自动重新检测；不折腾 `DISPLAY` 和宿主机 IP，不需要管理员权限，也不需要 "Hyper-V Administrators" 组成员——而 [X410 可靠检测 WSL2 的方案恰恰需要加入该组](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)
 
 **所有运行鼠标捕获类 X11 应用的用户**（WSL1/WSL2，或任何以 VcXsrv 为显示服务器的场景）可获得 Windows DDX 层（`hw/xwin`）的两项 X11 协议级修复：
