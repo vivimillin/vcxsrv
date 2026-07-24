@@ -20,7 +20,7 @@ All patches are submitted upstream as proper PRs ([PR #78](https://github.com/ma
 
 Upstream VcXsrv talks to WSL2 over TCP, through the NAT and localhost-forwarding layers. That path is behind several well-known annoyances: stutter under mouse-dense workloads (dragging, scrolling, SDL2 event floods), connections severed or hung after sleep/wake or Wi-Fi/VPN changes. 
 
-With `-vsock`, X11 traffic moves to a Hyper-V socket — a channel purpose-built for VM↔host communication that bypasses the TCP/IP stack entirely:
+With `-wslvsock`, X11 traffic moves to a Hyper-V socket — a channel purpose-built for VM↔host communication that bypasses the TCP/IP stack entirely:
 
 - **Performance** — no NAT, no localhost proxy, no network-stack overhead in the data path; input-heavy workloads stop stuttering
 - **Stability** — unaffected by VPN changes, Wi-Fi roaming, adapter power saving, or sleep/wake
@@ -62,9 +62,9 @@ Nothing here replaces what WSLg or X410 already do well — the point is that a 
 
 Unofficial builds are on the [Releases page](../../releases); each release lists exactly which patches it contains.
 
-### WSL2 vsock transport (`-vsock`)
+### WSL2 vsock transport (`-wslvsock`)
 
-VcXsrv has shipped a Hyper-V vsock transport for years, but it never worked for WSL2 out of the box: the listener binds a wildcard VM id that WSL2's utility VM refuses to match, and the exact VM id it needs changes on every WSL restart and was only discoverable with elevated tools. `-vsock` closes that gap: it detects the running WSL2 VM automatically via `wsl.exe -- wslinfo --vm-id` — **no admin rights, no "Hyper-V Administrators" group** (unlike the [HCS-API approach used by X410](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)) — binds the listener to that VM at port `106000 + display`, and watches the VM instance so the listener rebinds to the new id in ~1.5 s after every WSL restart, without restarting VcXsrv. On WSL1, or with no WSL2 VM present, it silently falls back to TCP. vsock stays off by default (no wildcard listener exposure, no log noise on non-Hyper-V hosts), and an xtrans bug that made every display collide on the same vsock port is fixed. Connections are treated as local clients (cookie-free), and only the bound VM can reach the listener.
+VcXsrv has shipped a Hyper-V vsock transport for years, but it never worked for WSL2 out of the box: the listener binds a wildcard VM id that WSL2's utility VM refuses to match, and the exact VM id it needs changes on every WSL restart and was only discoverable with elevated tools. `-wslvsock` closes that gap: it detects the running WSL2 VM automatically via `wsl.exe -- wslinfo --vm-id` — **no admin rights, no "Hyper-V Administrators" group** (unlike the [HCS-API approach used by X410](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)) — binds the listener to that VM at port `106000 + display`, and watches the VM instance so the listener rebinds to the new id in ~1.5 s after every WSL restart, without restarting VcXsrv. On WSL1, or with no WSL2 VM present, it silently falls back to TCP. vsock stays off by default (no wildcard listener exposure, no log noise on non-Hyper-V hosts), and an xtrans bug that made every display collide on the same vsock port is fixed. Connections are treated as local clients (cookie-free), and only the bound VM can reach the listener.
 
 [**feature/vsock-wsl2** Implementation Notes](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-Fix)
 
@@ -88,14 +88,14 @@ Download from the [Releases page](../../releases).
 
 ```bash
 # Windows side
-vcxsrv.exe :0 -multiwindow -clipboard -wgl -vsock
+vcxsrv.exe :0 -multiwindow -clipboard -wgl -wslvsock
 
 # WSL2 side — one socat forwarder (needs Store WSL 2.0+ and socat ≥ 1.7.4)
 socat UNIX-LISTEN:/tmp/.X11-unix/X0,fork,mode=777,forever,retry=10,interval=2 VSOCK-CONNECT:2:106000 &
 export DISPLAY=:0
 ```
 
-XLaunch users can equivalently set `ExtraParams="-vsock"` in `config.xlaunch` (the wizard's "Additional parameters for VcXsrv" field). 
+XLaunch users can equivalently set `ExtraParams="-wslvsock"` in `config.xlaunch` (the wizard's "Additional parameters for VcXsrv" field). 
 
 [**Full User Guide** (autostart, WSLg coexistence, troubleshooting)](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-User-Guide)
 
@@ -123,9 +123,9 @@ vsock transport (Windows 11 + Store WSL2, Ubuntu):
 | Validation | Result |
 | --- | --- |
 | X11 handshake over vsock | `SUCCESS`, cookie-free (FamilyLocal) |
-| Dual instances `:11` / `:12` with `-vsock` | both connect on 106011 / 106012 (display-offset fix) |
+| Dual instances `:11` / `:12` with `-wslvsock` | both connect on 106011 / 106012 (display-offset fix) |
 | WSL VM restarted while server keeps running | listener auto-rebound to new VM id; clients reconnect |
-| Default start (no `-vsock`) | no vsock listener; TCP path unchanged (no regression) |
+| Default start (no `-wslvsock`) | no vsock listener; TCP path unchanged (no regression) |
 
 ---
 
@@ -198,7 +198,7 @@ MIT-style X11 license, same as upstream VcXsrv.
 
 上游 VcXsrv 经 TCP（NAT + localhost 转发）与 WSL2 通信，这条路径正是一系列已知问题的根源：鼠标密集负载下的卡顿（拖拽、滚动、SDL2 消息风暴）、睡眠唤醒或 Wi-Fi/VPN 切换后的断连或挂起。
 
-新的 `-vsock` 实现了把 X11 流量迁移到 Hyper-V socket——一条专为 VM↔宿主机通信设计、完全绕过 TCP/IP 协议栈的通道：
+新的 `-wslvsock` 实现了把 X11 流量迁移到 Hyper-V socket——一条专为 VM↔宿主机通信设计、完全绕过 TCP/IP 协议栈的通道：
 
 - **性能**——数据路径上不再有 NAT、localhost 代理和网络协议栈开销；输入密集负载不再卡顿
 - **稳定性**——不受 VPN 切换、Wi-Fi 漫游、网卡节电、睡眠唤醒的影响；
@@ -240,9 +240,9 @@ MIT-style X11 license, same as upstream VcXsrv.
 
 非官方构建见 [Releases 页面](../../releases)，每个 release 注明了实际包含的补丁。
 
-### WSL2 vsock 传输（`-vsock`）
+### WSL2 vsock 传输（`-wslvsock`）
 
-VcXsrv 多年来一直内置 Hyper-V vsock 传输，但对 WSL2 从未开箱可用：监听绑定的 wildcard VM id 被 WSL2 的 utility VM 拒绝匹配，而所需的确切 VM id 每次 WSL 重启都会变化，且以往只有提权工具才能查到。<br>`-vsock` 补上了这个缺口：经 `wsl.exe -- wslinfo --vm-id` 自动检测运行中的 WSL2 VM——**无需管理员权限、无需 "Hyper-V Administrators" 组**（不同于 [X410 采用的 HCS API 方案](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)）——将监听绑定到该 VM 的 `106000 + display` 端口，并监视 VM 实例，使每次 WSL 重启后约 1.5 秒内自动重绑到新 id，无需重启 VcXsrv。<br>WSL1 或无 WSL2 VM 时静默回退到 TCP，完全兼容原有设置；vsock 默认关闭（无 wildcard 监听暴露、非 Hyper-V 主机无日志噪音）；同时修复了 xtrans 中所有 display 使用同一 vsock 端口的 bug。
+VcXsrv 多年来一直内置 Hyper-V vsock 传输，但对 WSL2 从未开箱可用：监听绑定的 wildcard VM id 被 WSL2 的 utility VM 拒绝匹配，而所需的确切 VM id 每次 WSL 重启都会变化，且以往只有提权工具才能查到。<br>`-wslvsock` 补上了这个缺口：经 `wsl.exe -- wslinfo --vm-id` 自动检测运行中的 WSL2 VM——**无需管理员权限、无需 "Hyper-V Administrators" 组**（不同于 [X410 采用的 HCS API 方案](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)）——将监听绑定到该 VM 的 `106000 + display` 端口，并监视 VM 实例，使每次 WSL 重启后约 1.5 秒内自动重绑到新 id，无需重启 VcXsrv。<br>WSL1 或无 WSL2 VM 时静默回退到 TCP，完全兼容原有设置；vsock 默认关闭（无 wildcard 监听暴露、非 Hyper-V 主机无日志噪音）；同时修复了 xtrans 中所有 display 使用同一 vsock 端口的 bug。
 
 [**feature/vsock-wsl2** 修复笔记](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-修复)
 
@@ -266,14 +266,14 @@ VcXsrv 的 DDX 层从未为 X11 pointer grab 实现 Windows 端的光标管理�
 
 ```bash
 # Windows 侧
-vcxsrv.exe :0 -multiwindow -clipboard -wgl -vsock
+vcxsrv.exe :0 -multiwindow -clipboard -wgl -wslvsock
 
 # WSL2 侧 —— 一条 socat 转发（需 Store 版 WSL 2.0+、socat ≥ 1.7.4）
 socat UNIX-LISTEN:/tmp/.X11-unix/X0,fork,mode=777,forever,retry=10,interval=2 VSOCK-CONNECT:2:106000 &
 export DISPLAY=:0
 ```
 
-XLaunch 用户可等价地在 `config.xlaunch` 里设置 `ExtraParams="-vsock"`（即向导的 "Additional parameters for VcXsrv" 输入框）。
+XLaunch 用户可等价地在 `config.xlaunch` 里设置 `ExtraParams="-wslvsock"`（即向导的 "Additional parameters for VcXsrv" 输入框）。
 
 [**完整使用指南**（自启动、与 WSLg 共存、故障排查）](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-使用指南)
 
@@ -301,9 +301,9 @@ vsock 传输（Windows 11 + Store 版 WSL2，Ubuntu）：
 | 验证项 | 结果 |
 | --- | --- |
 | vsock 上的 X11 握手 | `SUCCESS`，免 cookie（FamilyLocal） |
-| 双实例 `:11` / `:12` 均带 `-vsock` | 106011 / 106012 均可连通（display 偏移修复） |
+| 双实例 `:11` / `:12` 均带 `-wslvsock` | 106011 / 106012 均可连通（display 偏移修复） |
 | 服务端运行期间 WSL VM 真实重启 | 监听自动重绑到新 VM id；客户端重连成功 |
-| 默认启动（无 `-vsock`） | 无 vsock 监听；TCP 路径无变化（无回归） |
+| 默认启动（无 `-wslvsock`） | 无 vsock 监听；TCP 路径无变化（无回归） |
 
 ---
 
