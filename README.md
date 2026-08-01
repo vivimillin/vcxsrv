@@ -79,7 +79,7 @@ VcXsrv's DDX layer never implemented Windows-side cursor management for X11 poin
 
 ### Empty-mask cursor hiding
 
-X clients hide the cursor by defining a 1x1 all-zero ("empty") cursor — SDL uses this outside of grabs, e.g. dosbox-staging seamless mode. VcXsrv never honored it: the mi cursor layer converts such cursors to NullCursor, `winSetCursor(NULL)` does not hide the Windows cursor in the default mode, and the `emptyMask` rendering path would draw black pixels. The patch lets empty-mask cursors through (`showTransparent`, the xf86 `HARDWARE_CURSOR_SHOW_TRANSPARENT` approach) and renders them fully transparent. Same PR #78.
+X clients hide the cursor by defining a 1x1 all-zero ("empty") cursor — SDL uses this outside of grabs, e.g. dosbox-staging seamless mode. VcXsrv never honored it: the mi pointer layer converts such cursors to NullCursor, `winSetCursor(NULL)` does not hide the Windows cursor in the default mode, and the `emptyMask` rendering path would draw black pixels. The patch lets empty-mask cursors through (`showTransparent`, the xf86 `HARDWARE_CURSOR_SHOW_TRANSPARENT` approach) and renders them fully transparent. Same PR #78.
 
 **feature/raw-input-mouse:**  [Implementation Notes 2](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix),  [Implementation Notes 3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-Empty-Cursor-Hide-Fix)
 
@@ -243,7 +243,7 @@ MIT-style X11 license, same as upstream VcXsrv.
 | **WSL2 vsock 传输** | hyperv 监听永远匹配不上 WSL2 的 VM；绑定时忽略 display 号；默认即监听 | [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) — Open，PR 随后 |
 | **Raw Input 鼠标** | XInput2 `XI_RawMotion` 消息不生成；SDL2 鼠标相对模式无法工作 | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
 | **光标锁定与消隐** | `XGrabPointer` 设置 `confineTo` 无效；光标未锁定且未隐藏 | 同属 [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
-| **空光标隐藏** | 客户端用全零掩码光标隐藏指针时，屏幕上残留旧光标图像 | 同属 [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
+| **空光标隐藏** | 客户端用全零掩码光标隐藏光标时，屏幕上残留旧光标图像 | 同属 [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
 
 非官方构建见 [Releases 页面](../../releases)，每个 release 注明了实际包含的补丁。
 
@@ -263,7 +263,7 @@ VcXsrv 的 DDX 层从未为 X11 pointer grab 实现 Windows 端的光标管理�
 
 ### 空光标隐藏
 
-X 客户端通过定义 1×1 全零（"空"）光标来隐藏指针——SDL 在非抓取场景使用此法，如 dosbox-staging seamless 模式。VcXsrv 从未正确实现：mi 层把空光标替换为 NullCursor，`winSetCursor(NULL)` 在默认模式下并不隐藏 Windows 光标，emptyMask 渲染路径还会画出黑色像素。补丁放行空掩码光标（`showTransparent`，与 xf86 `HARDWARE_CURSOR_SHOW_TRANSPARENT` 同一做法）并渲染为全透明。同属 PR #78。
+X 客户端通过定义 1×1 全零（"空"）光标来隐藏光标——SDL 在非抓取场景使用此法，如 dosbox-staging seamless 模式。VcXsrv 从未正确实现：mi 层把空光标替换为 NullCursor，`winSetCursor(NULL)` 在默认模式下并不隐藏 Windows 光标，emptyMask 渲染路径还会画出黑色像素。补丁放行空掩码光标（`showTransparent`，与 xf86 `HARDWARE_CURSOR_SHOW_TRANSPARENT` 同一做法）并渲染为全透明。同属 PR #78。
 
 **feature/raw-input-mouse:**  [修复笔记2](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-修复),  [修复笔记3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-Empty-Cursor-Hide-修复)
 
