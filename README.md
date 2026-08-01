@@ -59,6 +59,7 @@ Nothing here replaces what WSLg or X410 already do well — the point is that a 
 | **WSL2 vsock transport** | hyperv listener never matches WSL2's VM; display number ignored on bind; listener on by default | [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) — Open, PR to follow |
 | **Raw Input mouse** | XInput2 `XI_RawMotion` never generated; SDL2 relative mouse mode broken | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
 | **Cursor confinement & hiding** | `XGrabPointer` with `confineTo` has no effect; cursor stays visible and free | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
+| **Empty-mask cursor hiding** | `XDefineCursor` with an all-zero-mask cursor left the previous cursor image on screen (pointer never hidden) | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
 
 Unofficial builds are on the [Releases page](../../releases); each release lists exactly which patches it contains.
 
@@ -66,7 +67,7 @@ Unofficial builds are on the [Releases page](../../releases); each release lists
 
 VcXsrv has shipped a Hyper-V vsock transport for years, but it never worked for WSL2 out of the box: the listener binds a wildcard VM id that WSL2's utility VM refuses to match, and the exact VM id it needs changes on every WSL restart and was only discoverable with elevated tools. `-wslvsock` closes that gap: it detects the running WSL2 VM automatically via `wsl.exe -- wslinfo --vm-id` — **no admin rights, no "Hyper-V Administrators" group** (unlike the [HCS-API approach used by X410](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)) — binds the listener to that VM at port `106000 + display`, and watches the VM instance so the listener rebinds to the new id in ~1–2 s after every WSL restart, without restarting VcXsrv. On WSL1, or with no WSL2 VM present, it silently falls back to TCP. vsock stays off by default (no wildcard listener exposure, no log noise on non-Hyper-V hosts), and an xtrans bug that made every display collide on the same vsock port is fixed. Connections are treated as local clients (cookie-free), and only the bound VM can reach the listener.
 
-[**feature/vsock-wsl2** Implementation Notes](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-Fix)
+**feature/vsock-wsl2:**  [Implementation Notes 1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-Fix)
 
 ### Raw Input mouse
 
@@ -76,7 +77,11 @@ VcXsrv's Windows input layer (`hw/xwin`) only ever queued absolute pointer event
 
 VcXsrv's DDX layer never implemented Windows-side cursor management for X11 pointer grabs: `XGrabPointer` with `confineTo` had no visible effect — the cursor stayed visible and could leave the window freely. The patch hooks the master and slave pointer grab callbacks so that grabs requesting confinement get a properly clipped (`ClipCursor`, with a 1px border guard and a 10ms re-apply timer) and hidden cursor, with Alt+Tab-aware temporary release and restore; implicit grabs and seamless mode are untouched. Same PR and same implementation notes as the Raw Input mouse patch above.
 
-[**feature/raw-input-mouse** Implementation Notes](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix)
+### Empty-mask cursor hiding
+
+X clients hide the pointer by defining a 1x1 all-zero ("empty") cursor — SDL uses this outside of grabs, e.g. dosbox-staging seamless mode. VcXsrv never honored it: the mi pointer layer converts such cursors to NullCursor, `winSetCursor(NULL)` does not hide the Windows cursor in the default mode, and the `emptyMask` rendering path would draw black pixels. The patch lets empty-mask cursors through (`showTransparent`, the xf86 `HARDWARE_CURSOR_SHOW_TRANSPARENT` approach) and renders them fully transparent. Same PR #78.
+
+**feature/raw-input-mouse:**  [Implementation Notes 2](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix),  [Implementation Notes 3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-Empty-Cursor-Hide-Fix)
 
 ---
 
@@ -144,6 +149,7 @@ Confirmed test reports from real users are what moves long-running PRs forward, 
 
 - [x] Raw Input mouse (`WM_INPUT` → `XI_RawMotion`)
 - [x] Cursor confinement & hiding on grab
+- [x] Empty-mask cursor hiding (SDL seamless mode)
 - [x] AF_VSOCK transport — zero-config, self-healing WSL2 VM↔host channel
 - [ ] Upstream merge of PR #78; vsock PR following Issue #80
 - [ ] Clipboard improvements — smoother bidirectional text/image sharing between Windows host and X11 clients
@@ -237,6 +243,7 @@ MIT-style X11 license, same as upstream VcXsrv.
 | **WSL2 vsock 传输** | hyperv 监听永远匹配不上 WSL2 的 VM；绑定时忽略 display 号；默认即监听 | [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) — Open，PR 随后 |
 | **Raw Input 鼠标** | XInput2 `XI_RawMotion` 消息不生成；SDL2 鼠标相对模式无法工作 | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
 | **光标锁定与消隐** | `XGrabPointer` 设置 `confineTo` 无效；光标未锁定且未隐藏 | 同属 [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
+| **空光标隐藏** | 客户端用全零掩码光标隐藏指针时，屏幕上残留旧光标图像 | 同属 [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
 
 非官方构建见 [Releases 页面](../../releases)，每个 release 注明了实际包含的补丁。
 
@@ -244,7 +251,7 @@ MIT-style X11 license, same as upstream VcXsrv.
 
 VcXsrv 多年来一直内置 Hyper-V vsock 传输，但对 WSL2 从未开箱可用：监听绑定的 wildcard VM id 被 WSL2 的 utility VM 拒绝匹配，而所需的确切 VM id 每次 WSL 重启都会变化，且以往只有提权工具才能查到。<br>`-wslvsock` 补上了这个缺口：经 `wsl.exe -- wslinfo --vm-id` 自动检测运行中的 WSL2 VM——**无需管理员权限、无需 "Hyper-V Administrators" 组**（不同于 [X410 采用的 HCS API 方案](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)）——将监听绑定到该 VM 的 `106000 + display` 端口，并监视 VM 实例，使每次 WSL 重启后约 1–2 秒内自动重绑到新 id，无需重启 VcXsrv。<br>WSL1 或无 WSL2 VM 时静默回退到 TCP，完全兼容原有设置；vsock 默认关闭（无 wildcard 监听暴露、非 Hyper-V 主机无日志噪音）；同时修复了 xtrans 中所有 display 使用同一 vsock 端口的 bug。
 
-[**feature/vsock-wsl2** 修复笔记](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-修复)
+**feature/vsock-wsl2:**  [修复笔记1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-修复)
 
 ### Raw Input 鼠标
 
@@ -254,7 +261,11 @@ VcXsrv 的 Windows 输入层（`hw/xwin`）只队列化绝对坐标事件，从�
 
 VcXsrv 的 DDX 层从未为 X11 pointer grab 实现 Windows 端的光标管理：`XGrabPointer` 设置 `confineTo` 后没有任何可见效果——光标未锁定、未隐藏。<br>补丁 hook master/slave pointer 的 grab 回调，使请求锁定的 grab 获得正确的光标裁剪（`ClipCursor`，1px 边框保护 + 10ms 重应用定时器）与消隐，并支持 Alt+Tab 临时释放与恢复；implicit grab 和 seamless 模式不受影响。与上面的 Raw Input 鼠标属同一个 PR。
 
-[**feature/raw-input-mouse** 修复笔记](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-修复)
+### 空光标隐藏
+
+X 客户端通过定义 1×1 全零（"空"）光标来隐藏指针——SDL 在非抓取场景使用此法，如 dosbox-staging seamless 模式。VcXsrv 从未正确实现：mi 层把空光标替换为 NullCursor，`winSetCursor(NULL)` 在默认模式下并不隐藏 Windows 光标，emptyMask 渲染路径还会画出黑色像素。补丁放行空掩码光标（`showTransparent`，与 xf86 `HARDWARE_CURSOR_SHOW_TRANSPARENT` 同一做法）并渲染为全透明。同属 PR #78。
+
+**feature/raw-input-mouse:**  [修复笔记2](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-修复),  [修复笔记3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-Empty-Cursor-Hide-修复)
 
 ---
 
@@ -322,6 +333,7 @@ vsock 传输（Windows 11 + Store 版 WSL2，Ubuntu）：
 
 - [x] Raw Input 鼠标（`WM_INPUT` → `XI_RawMotion`）
 - [x] Grab 时光标锁定与消隐
+- [x] 空光标隐藏（SDL seamless 模式）
 - [x] AF_VSOCK 传输——零配置、自愈的 WSL2 VM↔宿主通道
 - [ ] 上游合入 PR #78；vsock PR 随 Issue #80 提交
 - [ ] 剪贴板改进——Windows 宿主机与 X11 客户端之间更流畅的双向文本/图像共享
