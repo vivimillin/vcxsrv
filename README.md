@@ -32,7 +32,7 @@ With `-wslvsock`, X11 traffic moves to a Hyper-V socket — a channel purpose-bu
 - **3D/CAD tools** that capture the mouse for viewport navigation (Blender, FreeCAD)
 - **Remote desktop / VNC viewers** on X11 that lock the local cursor
 - **Emulators** using mouse capture for host integration
-- Any X11 client calling `XGrabPointer` with a confine window
+- Any X11 client calling `XGrabcursor` with a confine window
 
 ## How It Compares
 
@@ -58,8 +58,8 @@ Nothing here replaces what WSLg or X410 already do well — the point is that a 
 | --- | --- | --- |
 | **WSL2 vsock transport** | hyperv listener never matches WSL2's VM; display number ignored on bind; listener on by default | [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) — Open, PR to follow |
 | **Raw Input mouse** | XInput2 `XI_RawMotion` never generated; SDL2 relative mouse mode broken | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
-| **Cursor confinement & hiding** | `XGrabPointer` with `confineTo` has no effect; cursor stays visible and free | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
-| **Empty-mask cursor hiding** | `XDefineCursor` with an all-zero-mask cursor left the previous cursor image on screen (pointer never hidden) | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
+| **Cursor confinement & hiding** | `XGrabcursor` with `confineTo` has no effect; cursor stays visible and free | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
+| **Empty-mask cursor hiding** | `XDefineCursor` with an all-zero-mask cursor left the previous cursor image on screen (cursor never hidden) | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
 
 Unofficial builds are on the [Releases page](../../releases); each release lists exactly which patches it contains.
 
@@ -79,7 +79,7 @@ VcXsrv's DDX layer never implemented Windows-side cursor management for X11 poin
 
 ### Empty-mask cursor hiding
 
-X clients hide the pointer by defining a 1x1 all-zero ("empty") cursor — SDL uses this outside of grabs, e.g. dosbox-staging seamless mode. VcXsrv never honored it: the mi pointer layer converts such cursors to NullCursor, `winSetCursor(NULL)` does not hide the Windows cursor in the default mode, and the `emptyMask` rendering path would draw black pixels. The patch lets empty-mask cursors through (`showTransparent`, the xf86 `HARDWARE_CURSOR_SHOW_TRANSPARENT` approach) and renders them fully transparent. Same PR #78.
+X clients hide the cursor by defining a 1x1 all-zero ("empty") cursor — SDL uses this outside of grabs, e.g. dosbox-staging seamless mode. VcXsrv never honored it: the mi cursor layer converts such cursors to NullCursor, `winSetCursor(NULL)` does not hide the Windows cursor in the default mode, and the `emptyMask` rendering path would draw black pixels. The patch lets empty-mask cursors through (`showTransparent`, the xf86 `HARDWARE_CURSOR_SHOW_TRANSPARENT` approach) and renders them fully transparent. Same PR #78.
 
 **feature/raw-input-mouse:**  [Implementation Notes 2](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix),  [Implementation Notes 3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-Empty-Cursor-Hide-Fix)
 
