@@ -94,13 +94,13 @@ X 客户端通过定义 1×1 全零（"空"）光标来隐藏光标——SDL 在
 
 2. **启动服务端（Windows 侧）：**
    ```bash
-   # WSL2 —— 推荐 vsock 传输
+   # WSL2 —— 推荐： vsock 传输 & 鼠标修正
    vcxsrv.exe :0 -multiwindow -clipboard -wgl -wslvsock
 
-   # WSL1 或其他非 WSL 场景 —— 鼠标补丁无需任何配置
+   # WSL1 或其他非 WSL 场景 —— 仅鼠标修正，无需任何额外配置
    vcxsrv.exe -multiwindow -clipboard -wgl
    ```
-   > XLaunch 用户：等价地在 config.xlaunch 中设置 ExtraParams="-wslvsock"
+   > XLaunch 用户：等价地在 `config.xlaunch` 中设置 `ExtraParams="-wslvsock"`
    > （即向导的 "Additional parameters for VcXsrv" 输入框）。
 
 3. **连接（WSL2 侧）** —— 一条 socat 转发（需 Store 版 WSL 2.0+、socat ≥ 1.7.4）：
