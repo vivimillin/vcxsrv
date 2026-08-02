@@ -118,6 +118,8 @@ The most useful thing you can do — more than starring this repo — is to test
 
 Confirmed test reports from real users are what moves long-running PRs forward, and once merged, everyone gets these fixes in the official builds. Bugs specific to these unofficial builds can be reported in this repo's issue tracker.
 
+> Development, issues, and releases live in this repo; upstream PRs are staged through the shadow fork [vivimillin/vcxsrv-upstream](https://github.com/vivimillin/vcxsrv-upstream).
+
 ---
 
 ## Roadmap
