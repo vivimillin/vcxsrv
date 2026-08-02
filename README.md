@@ -112,6 +112,7 @@ X clients hide the cursor by defining a 1x1 all-zero ("empty") cursor — SDL us
 
 4. **Done.** For autostart at login, WSLg coexistence, and troubleshooting
 (including the DOSBox-Staging seamless-mode cursor tip), see the [https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-User-Guide](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-User-Guide).
+   > **Tip:** When running DOSBox-Staging on WSL, if the cursor stays still in seamless mode (does not follow the system cursor), set `export XDG_CURRENT_DESKTOP=WSL` before launching. SDL2 uses this to decide whether to enable X11 mouse integration.
 
 ---
 
