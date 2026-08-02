@@ -19,23 +19,17 @@ All patches are submitted upstream as proper PRs ([PR #78](https://github.com/ma
 
 ## Who Is This For
 
-**Anyone running Linux GUI apps on WSL2 — the vsock transport alone justifies these builds.**
-
-Upstream VcXsrv talks to WSL2 over TCP, through the NAT and localhost-forwarding layers. That path is behind several well-known annoyances: stutter under mouse-dense workloads (dragging, scrolling, SDL2 event floods), connections severed or hung after sleep/wake or Wi-Fi/VPN changes. 
-
-With `-wslvsock`, X11 traffic moves to a Hyper-V socket — a channel purpose-built for VM↔host communication that bypasses the TCP/IP stack entirely:
+**Anyone running Linux GUI apps on WSL2 — the vsock transport alone justifies these builds.** Upstream VcXsrv reaches WSL2 over TCP (NAT + localhost forwarding) — the path behind well-known annoyances: stutter under mouse-dense workloads (dragging, scrolling, SDL2 event floods), connections severed or hung after sleep/wake or Wi-Fi/VPN changes. `-wslvsock` moves X11 traffic to a Hyper-V socket — a channel purpose-built for VM↔host communication that bypasses the TCP/IP stack entirely:
 
 - **Performance** — no NAT, no localhost proxy, no network-stack overhead in the data path; input-heavy workloads stop stuttering
 - **Stability** — unaffected by VPN changes, Wi-Fi roaming, adapter power saving, or sleep/wake
-- **Zero configuration, zero privileges** — the running WSL2 VM is detected automatically at startup and re-detected automatically after every WSL restart; no `DISPLAY` IP juggling, no admin rights, and no "Hyper-V Administrators" group membership — which [X410's reliable WSL2 detection requires](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)
+- **Zero configuration, zero privileges** — the running WSL2 VM is auto-detected at startup and re-detected after every WSL restart; no `DISPLAY` IP juggling, no admin rights, no "Hyper-V Administrators" group membership — which [X410's reliable WSL2 detection requires](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)
 
 **Anyone running mouse-capturing X11 applications** — on WSL1/WSL2 or any setup using VcXsrv as the display server — gets two X11-protocol-level fixes in the Windows DDX layer (`hw/xwin`):
 
-- **SDL2 applications** requesting relative mouse mode (dosbox-staging, AssaultCube, crispy-doom, Quake-based engines, many other games)
-- **3D/CAD tools** that capture the mouse for viewport navigation (Blender, FreeCAD)
-- **Remote desktop / VNC viewers** on X11 that lock the local cursor
-- **Emulators** using mouse capture for host integration
-- Any X11 client calling `XGrabcursor` with a confine window
+- **SDL2 games** requesting relative mouse mode (dosbox-staging, AssaultCube, crispy-doom, Quake-based engines…)
+- **3D/CAD tools** capturing the mouse for viewport navigation (Blender, FreeCAD)
+- **Remote desktop / VNC viewers and emulators** that lock the local cursor — any X11 client calling `XGrabPointer` with a confine window
 
 ## How It Compares
 
@@ -47,9 +41,8 @@ With `-wslvsock`, X11 traffic moves to a Hyper-V socket — a channel purpose-bu
 | Relative mouse mode (`XI_RawMotion`) | broken for many games¹ | user-reported issues; no public tracker | never generated | ✓ working |
 | Cursor confinement & hiding on grab | broken for many games¹ | user-reported issues; no public tracker | not implemented | ✓ working |
 
-¹ Publicly tracked: [microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240) ("mouselock isnt working and mouse input is chaotic in video games"), [microsoft/wslg#521](https://github.com/microsoft/wslg/issues/521) ("Games can't catch cursor").
-
-² Per the [X410 documentation](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/), the codes that "more reliably detect WSL2" for vsock "require additional user privileges for accessing Hyper-V related API's in Windows" (membership in the 'Hyper-V Administrators' group). This fork detects the VM via `wsl.exe -- wslinfo --vm-id` instead, which needs no elevation at all.
+> ¹ Publicly tracked: [microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240) ("mouselock isnt working and mouse input is chaotic in video games"), [microsoft/wslg#521](https://github.com/microsoft/wslg/issues/521) ("Games can't catch cursor").<br>
+> ² Per the [X410 documentation](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/), the codes that "more reliably detect WSL2" for vsock "require additional user privileges for accessing Hyper-V related API's in Windows" (membership in the 'Hyper-V Administrators' group). This fork detects the VM via `wsl.exe -- wslinfo --vm-id` instead, which needs no elevation at all.
 
 Nothing here replaces what WSLg or X410 already do well — the point is that a **fully open-source** option no longer has to accept a slower transport or broken mouse capture as the price of entry.
 
@@ -57,34 +50,14 @@ Nothing here replaces what WSLg or X410 already do well — the point is that a 
 
 ## What This Provides
 
-| Patch set | What it fixes | Upstream status |
-| --- | --- | --- |
-| **WSL2 vsock transport** | hyperv listener never matches WSL2's VM; display number ignored on bind; listener on by default | [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) — Open, PR to follow |
-| **Raw Input mouse** | XInput2 `XI_RawMotion` never generated; SDL2 relative mouse mode broken | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
-| **Cursor confinement & hiding** | `XGrabcursor` with `confineTo` has no effect; cursor stays visible and free | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
-| **Empty-mask cursor hiding** | `XDefineCursor` with an all-zero-mask cursor left the previous cursor image on screen (cursor never hidden) | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
+| Patch set | What it fixes | Upstream status | Notes |
+| --- | --- | --- | --- |
+| **Raw Input mouse** | XInput2 `XI_RawMotion` never generated; SDL2 relative mouse mode broken | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes 1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix) |
+| **Cursor confinement & hiding** | `XGrabPointer` with `confineTo` has no effect; cursor stays visible and free | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes 1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix) |
+| **Empty-mask cursor hiding** | `XDefineCursor` with an all-zero-mask cursor left the previous cursor image on screen (cursor never hidden) | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes 2](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-Empty-Cursor-Hide-Fix) |
+| **WSL2 vsock transport** | auto WSL2 listener on by default; hyperv listener never matches WSL2's VM; display number ignored on bind | [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) — Open, PR to follow | [Implementation Notes 3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-Fix) |
 
-Unofficial builds are on the [Releases page](../../releases); each release lists exactly which patches it contains.
-
-### WSL2 vsock transport (`-wslvsock`)
-
-VcXsrv has shipped a Hyper-V vsock transport for years, but it never worked for WSL2 out of the box: the listener binds a wildcard VM id that WSL2's utility VM refuses to match, and the exact VM id it needs changes on every WSL restart and was only discoverable with elevated tools. `-wslvsock` closes that gap: it detects the running WSL2 VM automatically via `wsl.exe -- wslinfo --vm-id` — **no admin rights, no "Hyper-V Administrators" group** (unlike the [HCS-API approach used by X410](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)) — binds the listener to that VM at port `106000 + display`, and watches the VM instance so the listener rebinds to the new id in ~1–2 s after every WSL restart, without restarting VcXsrv. On WSL1, or with no WSL2 VM present, it silently falls back to TCP. vsock stays off by default (no wildcard listener exposure, no log noise on non-Hyper-V hosts), and an xtrans bug that made every display collide on the same vsock port is fixed. Connections are treated as local clients (cookie-free), and only the bound VM can reach the listener.
-
-**feature/vsock-wsl2:**  [Implementation Notes 1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-Fix)
-
-### Raw Input mouse
-
-VcXsrv's Windows input layer (`hw/xwin`) only ever queued absolute pointer events, so XInput2 `XI_RawMotion` was never generated — SDL2 and other XInput2 clients requesting relative mouse mode received no motion data and appeared stuck. (The `SDL_MOUSE_RELATIVE_MODE_WARP=1` workaround functions, but its per-move X11 round trips cause severe audio stutter under WSL.) The patch registers for Windows Raw Input (`WM_INPUT`) at window creation and injects hardware-level relative displacement into the X server's relative-event pipeline, flags absolute events so they no longer pollute raw motion, and sets the master pointer's valuator mode to `Relative` so clients interpret raw values correctly.
-
-### Cursor confinement & hiding
-
-VcXsrv's DDX layer never implemented Windows-side cursor management for X11 pointer grabs: `XGrabPointer` with `confineTo` had no visible effect — the cursor stayed visible and could leave the window freely. The patch hooks the master and slave pointer grab callbacks so that grabs requesting confinement get a properly clipped (`ClipCursor`, with a 1px border guard and a 10ms re-apply timer) and hidden cursor, with Alt+Tab-aware temporary release and restore; implicit grabs and seamless mode are untouched. Same PR and same implementation notes as the Raw Input mouse patch above.
-
-### Empty-mask cursor hiding
-
-X clients hide the cursor by defining a 1x1 all-zero ("empty") cursor — SDL uses this outside of grabs, e.g. dosbox-staging seamless mode. VcXsrv never honored it: the mi pointer layer converts such cursors to NullCursor, `winSetCursor(NULL)` does not hide the Windows cursor in the default mode, and the `emptyMask` rendering path would draw black pixels. The patch lets empty-mask cursors through (`showTransparent`, the xf86 `HARDWARE_CURSOR_SHOW_TRANSPARENT` approach) and renders them fully transparent. Same PR #78.
-
-**feature/raw-input-mouse:**  [Implementation Notes 2](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix),  [Implementation Notes 3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-Empty-Cursor-Hide-Fix)
+> Unofficial builds are on the [Releases page](../../releases); each release lists exactly which patches it contains. In-depth design and implementation write-ups for each patch set are in the wiki, linked in the **Notes** column above.
 
 ---
 
