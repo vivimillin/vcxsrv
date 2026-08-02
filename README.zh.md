@@ -7,7 +7,7 @@
 
 [VcXsrv](https://github.com/marchaesen/vcxsrv)（Windows 平台开源 X server）的非官方构建版本，包含两组补丁，补齐了 VcXsrv 成为 WSL 的一流 Linux GUI 显示方案所差的两块拼图：WSL2 vsock传输 & 鼠标相对模式与光标锁定。
 
-- **WSL2 Hyper-V vsock 传输**——VM 与宿主机的直通通道，取代 TCP / localhost 转发路径：鼠标密集负载下延迟更低、不受 VPN 切换或睡眠唤醒影响、几乎零配置。**让 VcXsrv 在 WSL2 下的显示响应达到 WSLg 和商业软件 X410 的水平，同时保持完全开源。**
+- **WSL2 Hyper-V vsock 传输**——VM 与宿主机的直通通道，取代 TCP / localhost 转发路径：鼠标密集负载下延迟更低、不受 VPN 切换或睡眠唤醒影响、几乎零配置。**让 VcXsrv 在 WSL2 下 2D 桌面负载的显示响应达到 WSLg 和商业软件 X410 的水平（GPU 加速的 3D/视频仍是 WSLg 的强项），同时保持完全开源。**
 
 - **鼠标相对模式与光标锁定**——硬件级 `XI_RawMotion` 加上正确的 `XGrabPointer` 锁定与消隐，**让 SDL/SDL2 游戏、模拟器、3D/CAD 工具正确捕获鼠标**。鼠标相对模式失灵是 WSL 长期存在的痛点——WSLg（[microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240)、[#521](https://github.com/microsoft/wslg/issues/521)）和 X410 上都存在。
 
