@@ -94,10 +94,10 @@ X clients hide the cursor by defining a 1x1 all-zero ("empty") cursor — SDL us
 
 2. **Start the server (Windows side):**
    ```bash
-   # WSL2 - recommended: vsock transport
+   # WSL2 - recommended: vsock transport & mouse patches
    vcxsrv.exe :0 -multiwindow -clipboard -wgl -wslvsock
 
-   # WSL1 or any non-WSL setup - mouse patches need no configuration
+   # WSL1 or any non-WSL setup - only mouse patches, need no extra configuration
    vcxsrv.exe -multiwindow -clipboard -wgl
    ```
    > XLaunch users: equivalently set ExtraParams="-wslvsock" in config.xlaunch
