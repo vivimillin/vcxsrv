@@ -1,5 +1,8 @@
 # VcXsrv — with WSL2 vsock & Relative Mouse Mode (Unofficial Builds)
 
+[![Release](https://img.shields.io/github/v/release/vivimillin/vcxsrv)](.../releases)
+[![License](https://img.shields.io/badge/license-X11-blue)](LICENSE)
+
 **English** · [中文版](README.zh.md)
 
 Unofficial builds of [VcXsrv](https://github.com/marchaesen/vcxsrv) — the open-source X server for Windows — with two patch sets that close the gap between VcXsrv and a first-class display server for Linux GUI apps on WSL: the WSL2 transport and mouse capture.
@@ -147,18 +150,31 @@ Confirmed test reports from real users are what moves long-running PRs forward, 
 
 ## Roadmap
 
+**Done**
 - [x] Raw Input mouse (`WM_INPUT` → `XI_RawMotion`)
 - [x] Cursor confinement & hiding on grab
 - [x] Empty-mask cursor hiding (SDL seamless mode)
 - [x] AF_VSOCK transport — zero-config, self-healing WSL2 VM↔host channel
+
+**In progress / Planned**
 - [ ] Upstream merge of PR #78; vsock PR following Issue #80
 - [ ] Clipboard improvements — smoother bidirectional text/image sharing between Windows host and X11 clients
 
 ---
 
-## How-to Build
+## Building from Source
 
-- **English:** [Building VcXsrv on WSL](https://github.com/vivimillin/vcxsrv/wiki/Building-VcXsrv-on-WSL)
+- **Clone the branch with the patches you want**
+
+   ```bash
+   # WSL2 vsock transport & Mouse patches (Issue #80 & PR #78)
+   git clone -b feature/vsock-wsl2 https://github.com/vivimillin/vcxsrv.git
+
+   # Mouse patches only (PR #78)
+   git clone -b feature/raw-input-mouse https://github.com/vivimillin/vcxsrv.git
+   ```
+
+- **Follow the step-by-step guid:** [Building VcXsrv on WSL](https://github.com/vivimillin/vcxsrv/wiki/Building-VcXsrv-on-WSL)
 
 ---
 

@@ -1,4 +1,7 @@
-# VcXsrv — with WSL2 vsock & Relative Mouse Mode (Unofficial Builds)
+# VcXsrv — 支持 WSL2 vsock 与鼠标相对模式 (Unofficial Builds)
+
+[![Release](https://img.shields.io/github/v/release/vivimillin/vcxsrv)](.../releases)
+[![License](https://img.shields.io/badge/license-X11-blue)](LICENSE)
 
 **中文** · [English Version](README.md)
 
@@ -147,18 +150,32 @@ vsock 传输（Windows 11 + Store 版 WSL2，Ubuntu）：
 
 ## 路线图
 
+**已完成**
 - [x] Raw Input 鼠标（`WM_INPUT` → `XI_RawMotion`）
 - [x] Grab 时光标锁定与消隐
 - [x] 空光标隐藏（SDL seamless 模式）
 - [x] AF_VSOCK 传输——零配置、自愈的 WSL2 VM↔宿主通道
+
+**待完成 / 规划**
 - [ ] 上游合入 PR #78；vsock PR 随 Issue #80 提交
 - [ ] 剪贴板改进——Windows 宿主机与 X11 客户端之间更流畅的双向文本/图像共享
 
 ---
 
-## 编译指南
+## 从源码构建
 
-- **中文：** [基于 WSL 的 VcXsrv 编译指南](https://github.com/vivimillin/vcxsrv/wiki/基于-WSL-的-VcXsrv-编译指南)
+- **克隆包含所需补丁的分支**
+
+   ```bash
+   # WSL2 vsock 传输 & 鼠标补丁 (Issue #80 & PR #78)
+   git clone -b feature/vsock-wsl2 https://github.com/vivimillin/vcxsrv.git
+
+   # 仅鼠标补丁 (PR #78)
+   git clone -b feature/raw-input-mouse https://github.com/vivimillin/vcxsrv.git
+   ```
+
+- **完整步骤指南：** [基于 WSL 的 VcXsrv 编译指南](https://github.com/vivimillin/vcxsrv/wiki/基于-WSL-的-VcXsrv-编译指南
+)
 
 ---
 
