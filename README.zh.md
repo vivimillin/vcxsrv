@@ -90,29 +90,28 @@ X 客户端通过定义 1×1 全零（"空"）光标来隐藏光标——SDL 在
 
 ## 快速使用
 
-从 [Releases 页面](../../releases) 下载安装。
+1. **安装** [Releases 页面](../../releases)的最新构建。
 
-**WSL2（推荐 vsock 传输）：**
+2. **启动服务端（Windows 侧）：**
+   ```bash
+   # WSL2 —— 推荐 vsock 传输
+   vcxsrv.exe :0 -multiwindow -clipboard -wgl -wslvsock
 
-```bash
-# Windows 侧
-vcxsrv.exe :0 -multiwindow -clipboard -wgl -wslvsock
+   # WSL1 或其他非 WSL 场景 —— 鼠标补丁无需任何配置
+   vcxsrv.exe -multiwindow -clipboard -wgl
+   ```
+   > XLaunch 用户：等价地在 config.xlaunch 中设置 ExtraParams="-wslvsock"
+   > （即向导的 "Additional parameters for VcXsrv" 输入框）。
 
-# WSL2 侧 —— 一条 socat 转发（需 Store 版 WSL 2.0+、socat ≥ 1.7.4）
-socat UNIX-LISTEN:/tmp/.X11-unix/X0,fork,mode=777,forever,retry=10,interval=2 VSOCK-CONNECT:2:106000 &
-export DISPLAY=:0
-```
+3. **连接（WSL2 侧）** —— 一条 socat 转发（需 Store 版 WSL 2.0+、socat ≥ 1.7.4）：
+   ```bash
+   socat UNIX-LISTEN:/tmp/.X11-unix/X0,fork,mode=777,forever,retry=10,interval=2 VSOCK-CONNECT:2:106000 &
+   export DISPLAY=:0
+   ```
+   > 把这两行加入 `~/.bashrc`，每个新终端即可开箱即用。
 
-XLaunch 用户可等价地在 `config.xlaunch` 里设置 `ExtraParams="-wslvsock"`（即向导的 "Additional parameters for VcXsrv" 输入框）。
-
-[**完整使用指南**（自启动、与 WSLg 共存、故障排查）](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-使用指南)
-
-> **WSL1 或其他非 WSL 场景：** 照常运行即可，鼠标补丁无需任何配置：
-> ```bash
-> vcxsrv.exe -multiwindow -clipboard -wgl
-> ```
-
-> **提示：** 在 WSL 上运行 dosbox-staging 时，如果 seamless 模式下光标静止不动（不跟随系统光标移动），启动前设置 `export XDG_CURRENT_DESKTOP=WSL`。SDL2 依赖此变量决定是否启用 X11 鼠标集成。
+4. **完成** 登录自启动、与 WSLg 共存、故障排查，参见 [https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-User-Guide](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-User-Guide)。
+   > **提示：** 在 WSL 上运行 DOSBox-Staging 时，如果 seamless 模式下光标静止不动（不跟随系统光标移动），启动前设置 `export XDG_CURRENT_DESKTOP=WSL`。SDL2 依赖此变量决定是否启用 X11 鼠标集成。
 
 ---
 
