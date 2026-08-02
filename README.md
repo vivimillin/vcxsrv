@@ -52,10 +52,10 @@ Nothing here replaces what WSLg or X410 already do well — the point is that a 
 
 | Patch set | What it fixes | Upstream status | Notes |
 | --- | --- | --- | --- |
-| **Raw Input mouse** | XInput2 `XI_RawMotion` never generated; SDL2 relative mouse mode broken | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes 1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix) |
-| **Cursor confinement & hiding** | `XGrabPointer` with `confineTo` has no effect; cursor stays visible and free | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes 1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix) |
-| **Empty-mask cursor hiding** | `XDefineCursor` with an all-zero-mask cursor left the previous cursor image on screen (cursor never hidden) | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes 2](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-Empty-Cursor-Hide-Fix) |
-| **WSL2 vsock transport** | auto WSL2 listener on by default; hyperv listener never matches WSL2's VM; display number ignored on bind | [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) — Open, PR to follow | [Implementation Notes 3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-Fix) |
+| **Raw Input mouse** | XInput2 `XI_RawMotion` never generated; SDL2 relative mouse mode broken | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes.1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix) |
+| **Cursor confinement & hiding** | `XGrabPointer` with `confineTo` has no effect; cursor stays visible and free | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes.1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix) |
+| **Empty-mask cursor hiding** | `XDefineCursor` with an all-zero-mask cursor left the previous cursor image on screen (cursor never hidden) | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes.2](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-Empty-Cursor-Hide-Fix) |
+| **WSL2 vsock transport** | auto WSL2 listener on by default; hyperv listener never matches WSL2's VM; display number ignored on bind | [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) — Open, PR to follow | [Implementation Notes.3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-Fix) |
 
 > Unofficial builds are on the [Releases page](../../releases); each release lists exactly which patches it contains. In-depth design and implementation write-ups for each patch set are in the wiki, linked in the **Notes** column above.
 
