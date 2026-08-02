@@ -11,7 +11,7 @@ Unofficial builds of [VcXsrv](https://github.com/marchaesen/vcxsrv) — the open
 
 - **Relative mouse mode & cursor confinement** — hardware-level `XI_RawMotion` plus proper `XGrabPointer` confinement and hiding, **so SDL/SDL2 games, emulators, and 3D/CAD tools capture the mouse correctly**. Broken relative mouse mode is a long-standing WSL pain point — including on WSLg ([microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240), [#521](https://github.com/microsoft/wslg/issues/521)) and X410.
 
-All patches are submitted upstream as proper PRs ([PR #78](https://github.com/marchaesen/vcxsrv/pull/78); [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) with a PR to follow). Upstream releases roughly once a year, so this fork provides builds in the meantime — each patch is retired once it lands upstream.
+All patches are submitted upstream as proper PRs to [marchaesen/vcxsrv](https://github.com/marchaesen/vcxsrv) (PR #78; Issue #80 with a PR to follow). Upstream releases roughly once a year, so this project provides builds in the meantime — each patch is retired once it lands upstream.
 
 [Releases](../../releases) · [Upstream PR #78](https://github.com/marchaesen/vcxsrv/pull/78) · [Issue #77](https://github.com/marchaesen/vcxsrv/issues/77) · [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80)
 
@@ -33,7 +33,7 @@ All patches are submitted upstream as proper PRs ([PR #78](https://github.com/ma
 
 ## How It Compares
 
-| | WSLg | X410 | VcXsrv (upstream) | **This fork** |
+| | WSLg | X410 | VcXsrv (upstream) | **These builds** |
 | --- | --- | --- | --- | --- |
 | Open source | Linux-side components | ✗ (proprietary, paid) | ✓ | ✓ |
 | WSL2 transport | local socket (fast) | Hyper-V vsock (fast) | TCP via NAT / localhost forwarding | **Hyper-V vsock (fast)** |
@@ -42,7 +42,7 @@ All patches are submitted upstream as proper PRs ([PR #78](https://github.com/ma
 | Cursor confinement & hiding on grab | broken for many games¹ | user-reported issues; no public tracker | not implemented | ✓ working |
 
 > ¹ Publicly tracked: [microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240) ("mouselock isnt working and mouse input is chaotic in video games"), [microsoft/wslg#521](https://github.com/microsoft/wslg/issues/521) ("Games can't catch cursor").<br>
-> ² Per the [X410 documentation](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/), the codes that "more reliably detect WSL2" for vsock "require additional user privileges for accessing Hyper-V related API's in Windows" (membership in the 'Hyper-V Administrators' group). This fork detects the VM via `wsl.exe -- wslinfo --vm-id` instead, which needs no elevation at all.
+> ² Per the [X410 documentation](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/), the codes that "more reliably detect WSL2" for vsock "require additional user privileges for accessing Hyper-V related API's in Windows" (membership in the 'Hyper-V Administrators' group). This project detects the VM via `wsl.exe -- wslinfo --vm-id` instead, which needs no elevation at all.
 
 Nothing here replaces what WSLg or X410 already do well — the point is that a **fully open-source** option no longer has to accept a slower transport or broken mouse capture as the price of entry.
 
@@ -111,12 +111,12 @@ vsock transport (Windows 11 + Store WSL2, Ubuntu):
 
 ## Help These Patches Land Upstream
 
-The most useful thing you can do — more than starring this fork — is to test the upstream submissions and leave your results there:
+The most useful thing you can do — more than starring this repo — is to test the upstream submissions and leave your results there:
 
 - [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) (mouse patches) and [Issue #77](https://github.com/marchaesen/vcxsrv/issues/77)
 - [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) (vsock transport)
 
-Confirmed test reports from real users are what moves long-running PRs forward, and once merged, everyone gets these fixes in the official builds. Bugs specific to these unofficial builds can be reported in this fork's issue tracker.
+Confirmed test reports from real users are what moves long-running PRs forward, and once merged, everyone gets these fixes in the official builds. Bugs specific to these unofficial builds can be reported in this repo's issue tracker.
 
 ---
 
@@ -155,11 +155,11 @@ Confirmed test reports from real users are what moves long-running PRs forward, 
 | Branch | Purpose | Default? |
 | --- | --- | --- |
 | `master` | Clean mirror of upstream | No  |
-| `fork-pages` | GitHub homepage, this README + upstream source | **Yes** |
+| `pages` | GitHub homepage, this README + upstream source | **Yes** |
 | `feature/raw-input-mouse` | PR #78 code | No  |
 | `feature/vsock-wsl2` | vsock transport code (Issue #80) | No  |
 
-`master` tracks upstream via `reset --hard` and carries no local commits. All fork-specific content lives on `fork-pages`.
+`master` tracks upstream via `reset --hard` and carries no local commits. All project-specific content lives on `pages`.
 
 ---
 
