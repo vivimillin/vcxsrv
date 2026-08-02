@@ -11,7 +11,7 @@
 
 - **鼠标相对模式与光标锁定**——硬件级 `XI_RawMotion` 加上正确的 `XGrabPointer` 锁定与消隐，**让 SDL/SDL2 游戏、模拟器、3D/CAD 工具正确捕获鼠标**。鼠标相对模式失灵是 WSL 长期存在的痛点——WSLg（[microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240)、[#521](https://github.com/microsoft/wslg/issues/521)）和 X410 上都存在。
 
-所有补丁均以规范 PR 形式提交上游（[PR #78](https://github.com/marchaesen/vcxsrv/pull/78)；[Issue #80](https://github.com/marchaesen/vcxsrv/issues/80)，PR 随后提交）。上游大约每年发布一次，本 fork 在审核期间提供构建版本——补丁一旦被上游合入即行退役。
+所有补丁均以规范 PR 形式提交上游 [marchaesen/vcxsrv](https://github.com/marchaesen/vcxsrv)（PR #78；Issue #80，PR 随后提交）。上游大约每年发布一次，本项目在审核期间提供构建版本——补丁一旦被上游合入即行退役。
 
 [Releases](../../releases) · [上游 PR #78](https://github.com/marchaesen/vcxsrv/pull/78) · [Issue #77](https://github.com/marchaesen/vcxsrv/issues/77) · [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80)
 
@@ -33,7 +33,7 @@
 
 ## 横向对比
 
-| | WSLg | X410 | 官方 VcXsrv | **本 fork** |
+| | WSLg | X410 | 官方 VcXsrv | **本项目** |
 | --- | --- | --- | --- | --- |
 | 开源 | Linux 侧组件开源 | ✗（闭源、付费） | ✓ | ✓ |
 | WSL2 传输 | 本地 socket（快） | Hyper-V vsock（快） | TCP 经 NAT / localhost 转发 | **Hyper-V vsock（快）** |
@@ -42,9 +42,9 @@
 | 光标锁定与消隐 | 众多游戏失灵¹ | 有用户反馈问题；无公开 tracker | 未实现 | ✓ 正常 |
 
 > ¹ 公开 issue：[microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240)（游戏中鼠标锁定失效、输入混乱）、[microsoft/wslg#521](https://github.com/microsoft/wslg/issues/521)（游戏无法捕获光标）。<br>
-> ² 据 [X410 官方文档](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)，其"更可靠检测 WSL2"的 vsock 代码"需要访问 Windows Hyper-V 相关 API 的额外用户权限"（即加入 "Hyper-V Administrators" 组）。本 fork 改用 `wsl.exe -- wslinfo --vm-id` 检测 VM，完全无需提权。
+> ² 据 [X410 官方文档](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)，其"更可靠检测 WSL2"的 vsock 代码"需要访问 Windows Hyper-V 相关 API 的额外用户权限"（即加入 "Hyper-V Administrators" 组）。本项目改用 `wsl.exe -- wslinfo --vm-id` 检测 VM，完全无需提权。
 
-本 fork 并非要替代 WSLg 或 X410 已经做好的部分——重点是**完全开源**的方案不必再以传输更慢、鼠标捕获失灵为代价。
+本项目并非要替代 WSLg 或 X410 已经做好的部分——重点是**完全开源**的方案不必再以传输更慢、鼠标捕获失灵为代价。
 
 ---
 
@@ -111,12 +111,14 @@ vsock 传输（Windows 11 + Store 版 WSL2，Ubuntu）：
 
 ## 帮助补丁合入上游
 
-比 star 本 fork 更有用的是：测试上游的提交并留下你的结果：
+比 star 本仓库更有用的是：测试上游的提交并留下你的结果：
 
 - [PR #78](https://github.com/marchaesen/vcxsrv/pull/78)（鼠标修正）与 [Issue #77](https://github.com/marchaesen/vcxsrv/issues/77)
 - [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80)（vsock 传输）
 
-真实用户的测试报告是帮助 review 的最有效方式；合入后官方构建就能为更多人使用。针对这些非官方构建本身的 bug，请报到本 fork 的 issue tracker。
+真实用户的测试报告是帮助 review 的最有效方式；合入后官方构建就能为更多人使用。针对这些非官方构建本身的 bug，请报到本仓库的 issue tracker。
+
+> 开发、issue 与发布均在本仓库进行；上游 PR 经影子仓库 [vivimillin/vcxsrv-upstream](https://github.com/vivimillin/vcxsrv-upstream) 提交。
 
 ---
 
@@ -155,11 +157,11 @@ vsock 传输（Windows 11 + Store 版 WSL2，Ubuntu）：
 | 分支 | 用途 | 默认分支？ |
 | --- | --- | --- |
 | `master` | 上游的干净镜像 | 否 |
-| `fork-pages` | GitHub 主页、本 README + 上游代码 | **是** |
+| `pages` | GitHub 主页、本 README + 上游代码 | **是** |
 | `feature/raw-input-mouse` | PR #78 代码 | 否 |
 | `feature/vsock-wsl2` | vsock 传输代码（Issue #80） | 否 |
 
-`master` 通过 `reset --hard` 跟踪上游，不携带本地提交。所有 fork 专属内容在 `fork-pages` 上。
+`master` 通过 `reset --hard` 跟踪上游，不携带本地提交。所有项目专属内容在 `pages` 上。
 
 ---
 
