@@ -90,29 +90,28 @@ X clients hide the cursor by defining a 1x1 all-zero ("empty") cursor — SDL us
 
 ## Quick Start
 
-Download from the [Releases page](../../releases).
+1. **Install** the latest build from the [Releases page](../../releases).
 
-**WSL2 (recommended: vsock transport):**
+2. **Start the server (Windows side):**
+   ```bash
+   # WSL2 - recommended: vsock transport
+   vcxsrv.exe :0 -multiwindow -clipboard -wgl -wslvsock
 
-```bash
-# Windows side
-vcxsrv.exe :0 -multiwindow -clipboard -wgl -wslvsock
+   # WSL1 or any non-WSL setup - mouse patches need no configuration
+   vcxsrv.exe -multiwindow -clipboard -wgl
+   ```
+   > XLaunch users: equivalently set ExtraParams="-wslvsock" in config.xlaunch
+   > (the wizard's "Additional parameters for VcXsrv" field).
 
-# WSL2 side — one socat forwarder (needs Store WSL 2.0+ and socat ≥ 1.7.4)
-socat UNIX-LISTEN:/tmp/.X11-unix/X0,fork,mode=777,forever,retry=10,interval=2 VSOCK-CONNECT:2:106000 &
-export DISPLAY=:0
-```
+3. **Connect (WSL2 side)** - one socat forwarder (requires Store WSL 2.0+ and socat ≥ 1.7.4):
+   ```bash
+   socat UNIX-LISTEN:/tmp/.X11-unix/X0,fork,mode=777,forever,retry=10,interval=2 VSOCK-CONNECT:2:106000 &
+   export DISPLAY=:0
+   ```
+   > Add both lines to ~/.bashrc so every new shell works out of the box.
 
-XLaunch users can equivalently set `ExtraParams="-wslvsock"` in `config.xlaunch` (the wizard's "Additional parameters for VcXsrv" field). 
-
-[**Full User Guide** (autostart, WSLg coexistence, troubleshooting)](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-User-Guide)
-
-> **WSL1, or any non-WSL setup:** run as usual — the mouse patches need no configuration:
-> ```bash
-> vcxsrv.exe -multiwindow -clipboard -wgl
-> ```
-
-> **Tip:** When running dosbox-staging on WSL, if the cursor stays still in seamless mode (does not follow the system cursor), set `export XDG_CURRENT_DESKTOP=WSL` before launching. SDL2 uses this to decide whether to enable X11 mouse integration.
+4. **Done.** For autostart at login, WSLg coexistence, and troubleshooting
+(including the DOSBox-Staging seamless-mode cursor tip), see the [https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-User-Guide](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-User-Guide).
 
 ---
 
