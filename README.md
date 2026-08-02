@@ -7,7 +7,7 @@
 
 Unofficial builds of [VcXsrv](https://github.com/marchaesen/vcxsrv) — the open-source X server for Windows — with two patch sets that close the gap between VcXsrv and a first-class display server for Linux GUI apps on WSL: the WSL2 transport and mouse capture.
 
-- **Hyper-V vsock transport for WSL2** — a direct VM↔host channel that replaces the TCP / localhost-forwarding path: lower latency under input-heavy load, unaffected by VPN switching or sleep/wake, and effectively zero configuration. **Display responsiveness on par with WSLg and the commercial X410 — a fully open-source X410 alternative for WSL2.**
+- **Hyper-V vsock transport for WSL2** — a direct VM↔host channel that replaces the TCP / localhost-forwarding path: lower latency under input-heavy load, unaffected by VPN switching or sleep/wake, and effectively zero configuration. **Display responsiveness on par with WSLg and the commercial X410 for 2D desktop workloads (WSLg keeps the edge in GPU-accelerated 3D/video) — a fully open-source X410 alternative for WSL2.**
 
 - **Relative mouse mode & cursor confinement** — hardware-level `XI_RawMotion` plus proper `XGrabPointer` confinement and hiding, **so SDL/SDL2 games, emulators, and 3D/CAD tools capture the mouse correctly**. Broken relative mouse mode is a long-standing WSL pain point — including on WSLg ([microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240), [#521](https://github.com/microsoft/wslg/issues/521)) and X410.
 
