@@ -1,7 +1,7 @@
 # VcXsrv — with WSL2 vsock & Relative Mouse Mode (Unofficial Builds)
 
-[![Release](https://img.shields.io/github/v/release/vivimillin/vcxsrv)](.../releases)
-[![License](https://img.shields.io/badge/license-X11-blue)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/vivimillin/vcxsrv)](../../releases)
+[![License](https://img.shields.io/badge/license-X11-blue)](COPYING)
 
 **English** · [中文版](README.zh.md)
 
@@ -55,7 +55,7 @@ Nothing here replaces what WSLg or X410 already do well — the point is that a 
 | **Raw Input mouse** | XInput2 `XI_RawMotion` never generated; SDL2 relative mouse mode broken | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes.1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix) |
 | **Cursor confinement & hiding** | `XGrabPointer` with `confineTo` has no effect; cursor stays visible and free | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes.1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix) |
 | **Empty-mask cursor hiding** | `XDefineCursor` with an all-zero-mask cursor left the previous cursor image on screen (cursor never hidden) | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes.2](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-Empty-Cursor-Hide-Fix) |
-| **WSL2 vsock transport** | auto WSL2 listener on by default; hyperv listener never matches WSL2's VM; display number ignored on bind | [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) — Open, PR to follow | [Implementation Notes.3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-Fix) |
+| **WSL2 vsock transport** | zero-config listener for WSL2; upstream hyperv listener never matches WSL2's VM; display number ignored on bind | [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) — Open, PR to follow | [Implementation Notes.3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-Fix) |
 
 > Unofficial builds are on the [Releases page](../../releases); each release lists exactly which patches it contains. In-depth design and implementation write-ups for each patch set are in the wiki, linked in the **Notes** column above.
 
@@ -83,8 +83,7 @@ Nothing here replaces what WSLg or X410 already do well — the point is that a 
    ```
    > Add both lines to ~/.bashrc so every new shell works out of the box.
 
-4. **Done.** For autostart at login, WSLg coexistence, and troubleshooting
-(including the DOSBox-Staging seamless-mode cursor tip), see the [https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-User-Guide](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-User-Guide).
+4. **Done.** For autostart at login, WSLg coexistence, and troubleshooting, see the [https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-User-Guide](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-User-Guide).
    > **Tip:** When running DOSBox-Staging on WSL, if the cursor stays still in seamless mode (does not follow the system cursor), set `export XDG_CURRENT_DESKTOP=WSL` before launching. SDL2 uses this to decide whether to enable X11 mouse integration.
 
 ---
@@ -147,7 +146,7 @@ Confirmed test reports from real users are what moves long-running PRs forward, 
    git clone -b feature/raw-input-mouse https://github.com/vivimillin/vcxsrv.git
    ```
 
-- **Follow the step-by-step guid:** [Building VcXsrv on WSL](https://github.com/vivimillin/vcxsrv/wiki/Building-VcXsrv-on-WSL)
+- **Follow the step-by-step guide:** [Building VcXsrv on WSL](https://github.com/vivimillin/vcxsrv/wiki/Building-VcXsrv-on-WSL)
 
 ---
 
@@ -156,7 +155,7 @@ Confirmed test reports from real users are what moves long-running PRs forward, 
 | Branch | Purpose | Default? |
 | --- | --- | --- |
 | `master` | Clean mirror of upstream | No  |
-| `fork-pages` | GitHub homepage, this README | **Yes** |
+| `fork-pages` | GitHub homepage, this README + upstream source | **Yes** |
 | `feature/raw-input-mouse` | PR #78 code | No  |
 | `feature/vsock-wsl2` | vsock transport code (Issue #80) | No  |
 
