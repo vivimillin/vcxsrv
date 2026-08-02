@@ -19,23 +19,17 @@
 
 ## 适用场景
 
-**所有在 WSL2 上运行 Linux GUI 应用的用户——仅 vsock 传输一项就值得试一试。**
-
-上游 VcXsrv 经 TCP（NAT + localhost 转发）与 WSL2 通信，这条路径正是一系列已知问题的根源：鼠标密集负载下的卡顿（拖拽、滚动、SDL2 消息风暴）、睡眠唤醒或 Wi-Fi/VPN 切换后的断连或挂起。
-
-新的 `-wslvsock` 实现了把 X11 流量迁移到 Hyper-V socket——一条专为 VM↔宿主机通信设计、完全绕过 TCP/IP 协议栈的通道：
+**所有在 WSL2 上运行 Linux GUI 应用的用户——仅 vsock 带来的性能提升就值得试一试。** 上游 VcXsrv 经 TCP（NAT + localhost 转发）与 WSL2 通信，这条路径正是一系列已知问题的根源：鼠标密集负载下的图像声音卡顿（拖拽、滚动、SDL2 消息风暴）、睡眠唤醒或 Wi-Fi/VPN 切换后的断连或挂起。`-wslvsock` 把 X11 流量迁移到 Hyper-V socket——一条专为 VM↔宿主机通信设计、完全绕过 TCP/IP 协议栈的通道：
 
 - **性能**——数据路径上不再有 NAT、localhost 代理和网络协议栈开销；输入密集负载不再卡顿
-- **稳定性**——不受 VPN 切换、Wi-Fi 漫游、网卡节电、睡眠唤醒的影响；
-- **无需特权**——启动时自动检测运行中的 WSL2 VM，每次 WSL 重启后自动重新检测；不折腾 `DISPLAY` 和宿主机 IP，不需要管理员权限，也不需要 "Hyper-V Administrators" 组成员——而 [X410 可靠检测 WSL2 的方案恰恰需要加入该组](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)
+- **稳定性**——不受 VPN 切换、Wi-Fi 漫游、网卡节电、睡眠唤醒的影响
+- **零配置、零特权**——启动时自动检测运行中的 WSL2 VM，每次 WSL 重启后自动重新检测；不折腾 `DISPLAY` 和宿主机 IP，不需要管理员权限，也不需要 "Hyper-V Administrators" 组成员——而 [X410 可靠检测 WSL2 的方案恰恰需要加入该组](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)
 
 **所有运行鼠标捕获类 X11 应用的用户**（WSL1/WSL2，或任何以 VcXsrv 为显示服务器的场景）可获得 Windows DDX 层（`hw/xwin`）的两项 X11 协议级修复：
 
-- 请求相对鼠标模式的 **SDL2 应用**（dosbox-staging、AssaultCube、crispy-doom、Quake 系列引擎及其他众多游戏）
+- 请求相对鼠标模式的 **SDL2 游戏**（dosbox-staging、AssaultCube、crispy-doom、Quake 系列引擎等）
 - 捕获鼠标用于视角导航的 **3D/CAD 工具**（Blender、FreeCAD）
-- 在 X11 上运行时锁定本地光标的 **远程桌面/VNC 查看器**
-- 使用鼠标捕获实现宿主机集成的 **模拟器**
-- 任何调用 `XGrabPointer` 并传入 confine window 的 X11 客户端
+- 锁定本地光标的 **远程桌面/VNC 查看器与模拟器**——任何调用 `XGrabPointer` 并传入 confine window 的 X11 客户端
 
 ## 横向对比
 
@@ -47,9 +41,8 @@
 | 相对鼠标模式（`XI_RawMotion`） | 众多游戏失灵¹ | 有用户反馈问题；无公开 tracker | 从不生成 | ✓ 正常 |
 | 光标锁定与消隐 | 众多游戏失灵¹ | 有用户反馈问题；无公开 tracker | 未实现 | ✓ 正常 |
 
-¹ 公开 issue：[microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240)（游戏中鼠标锁定失效、输入混乱）、[microsoft/wslg#521](https://github.com/microsoft/wslg/issues/521)（游戏无法捕获光标）。
-
-² 据 [X410 官方文档](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)，其"更可靠检测 WSL2"的 vsock 代码"需要访问 Windows Hyper-V 相关 API 的额外用户权限"（即加入 "Hyper-V Administrators" 组）。本 fork 改用 `wsl.exe -- wslinfo --vm-id` 检测 VM，完全无需提权。
+> ¹ 公开 issue：[microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240)（游戏中鼠标锁定失效、输入混乱）、[microsoft/wslg#521](https://github.com/microsoft/wslg/issues/521)（游戏无法捕获光标）。<br>
+> ² 据 [X410 官方文档](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)，其"更可靠检测 WSL2"的 vsock 代码"需要访问 Windows Hyper-V 相关 API 的额外用户权限"（即加入 "Hyper-V Administrators" 组）。本 fork 改用 `wsl.exe -- wslinfo --vm-id` 检测 VM，完全无需提权。
 
 本 fork 并非要替代 WSLg 或 X410 已经做好的部分——重点是**完全开源**的方案不必再以传输更慢、鼠标捕获失灵为代价。
 
@@ -57,34 +50,14 @@
 
 ## 提供的补丁
 
-| 补丁 | 修复内容 | 上游状态 |
-| --- | --- | --- |
-| **WSL2 vsock 传输** | hyperv 监听永远匹配不上 WSL2 的 VM；绑定时忽略 display 号；默认即监听 | [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) — Open，PR 随后 |
-| **Raw Input 鼠标** | XInput2 `XI_RawMotion` 消息不生成；SDL2 鼠标相对模式无法工作 | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
-| **光标锁定与消隐** | `XGrabPointer` 设置 `confineTo` 无效；光标未锁定且未隐藏 | 同属 [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
-| **空光标隐藏** | 客户端用全零掩码光标隐藏光标时，屏幕上残留旧光标图像 | 同属 [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open |
+| 补丁  | 修复内容 | 上游状态 | 实现笔记 |
+| --- | --- | --- | --- |
+| **Raw Input 鼠标** | XInput2 `XI_RawMotion` 消息不生成；SDL2 鼠标相对模式无法工作 | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [修复笔记.1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-修复) |
+| **光标锁定与消隐** | `XGrabPointer` 设置 `confineTo` 无效；光标未锁定且未隐藏 | 同属 [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [修复笔记.1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-修复) |
+| **空光标隐藏** | 客户端用全零掩码光标隐藏光标时，屏幕上残留旧光标图像 | 同属 [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [修复笔记.2](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-Empty-Cursor-Hide-修复) |
+| **WSL2 vsock 传输** | 实现零配置监听 WSL2；修正原 hyperv 监听匹配不上 WSL2 的 VM；修正 display 号被忽略 | [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) — Open，PR 随后 | [修复笔记.3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-修复) |
 
-非官方构建见 [Releases 页面](../../releases)，每个 release 注明了实际包含的补丁。
-
-### WSL2 vsock 传输（`-wslvsock`）
-
-VcXsrv 多年来一直内置 Hyper-V vsock 传输，但对 WSL2 从未开箱可用：监听绑定的 wildcard VM id 被 WSL2 的 utility VM 拒绝匹配，而所需的确切 VM id 每次 WSL 重启都会变化，且以往只有提权工具才能查到。<br>`-wslvsock` 补上了这个缺口：经 `wsl.exe -- wslinfo --vm-id` 自动检测运行中的 WSL2 VM——**无需管理员权限、无需 "Hyper-V Administrators" 组**（不同于 [X410 采用的 HCS API 方案](https://x410.dev/cookbook/wsl/using-x410-with-wsl2/)）——将监听绑定到该 VM 的 `106000 + display` 端口，并监视 VM 实例，使每次 WSL 重启后约 1–2 秒内自动重绑到新 id，无需重启 VcXsrv。<br>WSL1 或无 WSL2 VM 时静默回退到 TCP，完全兼容原有设置；vsock 默认关闭（无 wildcard 监听暴露、非 Hyper-V 主机无日志噪音）；同时修复了 xtrans 中所有 display 使用同一 vsock 端口的 bug。
-
-**feature/vsock-wsl2:**  [修复笔记1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-修复)
-
-### Raw Input 鼠标
-
-VcXsrv 的 Windows 输入层（`hw/xwin`）只队列化绝对坐标事件，从不生成 XInput2 `XI_RawMotion`——请求相对鼠标模式的 SDL2 及其他 XInput2 客户端收不到运动数据，表现为卡死（虽然可用变通方案 `SDL_MOUSE_RELATIVE_MODE_WARP=1`，但每次移动一次的 X11 往返消息风暴在 WSL 下会导致画面和音频卡顿）。<br>补丁在窗口创建时注册 Windows Raw Input（`WM_INPUT`），把硬件级相对位移注入 X server 的相对事件管道；给绝对坐标事件加标志防止污染 raw motion；并将 master pointer 的 valuator 模式设为 `Relative`，使客户端正确解释 raw 值。
-
-### 光标锁定与消隐
-
-VcXsrv 的 DDX 层从未为 X11 pointer grab 实现 Windows 端的光标管理：`XGrabPointer` 设置 `confineTo` 后没有任何可见效果——光标未锁定、未隐藏。<br>补丁 hook master/slave pointer 的 grab 回调，使请求锁定的 grab 获得正确的光标裁剪（`ClipCursor`，1px 边框保护 + 10ms 重应用定时器）与消隐，并支持 Alt+Tab 临时释放与恢复；implicit grab 和 seamless 模式不受影响。与上面的 Raw Input 鼠标属同一个 PR。
-
-### 空光标隐藏
-
-X 客户端通过定义 1×1 全零（"空"）光标来隐藏光标——SDL 在非抓取场景使用此法，如 dosbox-staging seamless 模式。VcXsrv 从未正确实现：mi 层把空光标替换为 NullCursor，`winSetCursor(NULL)` 在默认模式下并不隐藏 Windows 光标，emptyMask 渲染路径还会画出黑色像素。补丁放行空掩码光标（`showTransparent`，与 xf86 `HARDWARE_CURSOR_SHOW_TRANSPARENT` 同一做法）并渲染为全透明。同属 PR #78。
-
-**feature/raw-input-mouse:**  [修复笔记2](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-修复),  [修复笔记3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-Empty-Cursor-Hide-修复)
+> 非官方构建见 [Releases 页面](../../releases)，每个 release 注明了实际包含的补丁。各补丁的详细设计与实现分析见上方"**实现笔记**"列的 wiki 链接。
 
 ---
 
