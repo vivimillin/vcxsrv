@@ -100,7 +100,7 @@ X clients hide the cursor by defining a 1x1 all-zero ("empty") cursor — SDL us
    # WSL1 or any non-WSL setup - only mouse patches, need no extra configuration
    vcxsrv.exe -multiwindow -clipboard -wgl
    ```
-   > XLaunch users: equivalently set ExtraParams="-wslvsock" in config.xlaunch
+   > XLaunch users: equivalently set `ExtraParams="-wslvsock"` in `config.xlaunch`
    > (the wizard's "Additional parameters for VcXsrv" field).
 
 3. **Connect (WSL2 side)** - one socat forwarder (requires Store WSL 2.0+ and socat ≥ 1.7.4):
