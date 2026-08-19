@@ -11,9 +11,9 @@
 
 - **鼠标相对模式与光标锁定**——硬件级 `XI_RawMotion` 加上正确的 `XGrabPointer` 锁定与消隐，**让 SDL/SDL2 游戏、模拟器、3D/CAD 工具正确捕获鼠标**。鼠标相对模式失灵是 WSL 长期存在的痛点——WSLg（[microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240)、[#521](https://github.com/microsoft/wslg/issues/521)）和 X410 上都存在。
 
-所有补丁均以规范 PR 形式提交上游 [marchaesen/vcxsrv](https://github.com/marchaesen/vcxsrv)（PR #78；Issue #80，PR 随后提交）。上游大约每年发布一次，本项目在审核期间提供构建版本——补丁一旦被上游合入即行退役。
+所有补丁均以规范 PR 形式提交上游 [marchaesen/vcxsrv](https://github.com/marchaesen/vcxsrv)（PR #78；PR #81）。上游大约每年发布一次，本项目在审核期间提供构建版本——补丁一旦被上游合入即行退役。
 
-[Releases](../../releases) · [上游 PR #78](https://github.com/marchaesen/vcxsrv/pull/78) · [Issue #77](https://github.com/marchaesen/vcxsrv/issues/77) · [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80)
+[Releases](../../releases) · [上游 PR #78](https://github.com/marchaesen/vcxsrv/pull/78) · [Issue #77](https://github.com/marchaesen/vcxsrv/issues/77) · [PR #81](https://github.com/marchaesen/vcxsrv/pull/81) · [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80)
 
 ---
 
@@ -55,7 +55,7 @@
 | **Raw Input 鼠标** | XInput2 `XI_RawMotion` 消息不生成；SDL2 鼠标相对模式无法工作 | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [修复笔记.1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-修复) |
 | **光标锁定与消隐** | `XGrabPointer` 设置 `confineTo` 无效；光标未锁定且未隐藏 | 同属 [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [修复笔记.1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-修复) |
 | **空光标隐藏** | 客户端用全零掩码光标隐藏光标时，屏幕上残留旧光标图像 | 同属 [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [修复笔记.2](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-Empty-Cursor-Hide-修复) |
-| **WSL2 vsock 传输** | 实现零配置监听 WSL2；修正原 hyperv 监听匹配不上 WSL2 的 VM；修正 display 号被忽略 | [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) — Open，PR 随后 | [修复笔记.3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-修复) |
+| **WSL2 vsock 传输** | 实现零配置监听 WSL2；修正原 hyperv 监听匹配不上 WSL2 的 VM；修正 display 号被忽略 | [PR #81](https://github.com/marchaesen/vcxsrv/pull/81) — Open | [修复笔记.3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-修复) |
 
 > 非官方构建见 [Releases 页面](../../releases)，每个 release 注明了实际包含的补丁。各补丁的详细设计与实现分析见上方"**实现笔记**"列的 wiki 链接。
 
@@ -114,7 +114,7 @@ vsock 传输（Windows 11 + Store 版 WSL2，Ubuntu）：
 比 star 本仓库更有用的是：测试上游的提交并留下你的结果：
 
 - [PR #78](https://github.com/marchaesen/vcxsrv/pull/78)（鼠标修正）与 [Issue #77](https://github.com/marchaesen/vcxsrv/issues/77)
-- [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80)（vsock 传输）
+- [PR #81](https://github.com/marchaesen/vcxsrv/pull/81)（vsock 传输）与 [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80)
 
 真实用户的测试报告是帮助 review 的最有效方式；合入后官方构建就能为更多人使用。针对这些非官方构建本身的 bug，请报到本仓库的 issue tracker。
 
@@ -131,7 +131,7 @@ vsock 传输（Windows 11 + Store 版 WSL2，Ubuntu）：
 - [x] AF_VSOCK 传输——零配置、自愈的 WSL2 VM↔宿主通道
 
 **待完成 / 规划**
-- [ ] 上游合入 PR #78；vsock PR 随 Issue #80 提交
+- [ ] 上游合入 PR #78 与 PR #81
 - [ ] 剪贴板改进——Windows 宿主机与 X11 客户端之间更流畅的双向文本/图像共享
 
 ---
@@ -141,7 +141,7 @@ vsock 传输（Windows 11 + Store 版 WSL2，Ubuntu）：
 - **克隆包含所需补丁的分支**
 
    ```bash
-   # WSL2 vsock 传输 & 鼠标修正 (Issue #80 & PR #78)
+   # WSL2 vsock 传输 & 鼠标修正 (PR #81 & PR #78)
    git clone -b feature/vsock-wsl2 https://github.com/vivimillin/vcxsrv.git
 
    # 仅鼠标修正 (PR #78)
@@ -159,7 +159,7 @@ vsock 传输（Windows 11 + Store 版 WSL2，Ubuntu）：
 | `master` | 上游的干净镜像 | 否 |
 | `pages` | GitHub 主页、本 README + 上游代码 | **是** |
 | `feature/raw-input-mouse` | PR #78 代码 | 否 |
-| `feature/vsock-wsl2` | vsock 传输代码（Issue #80） | 否 |
+| `feature/vsock-wsl2` | PR #81 代码 | 否 |
 
 `master` 通过 `reset --hard` 跟踪上游，不携带本地提交。所有项目专属内容在 `pages` 上。
 

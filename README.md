@@ -11,9 +11,9 @@ Unofficial builds of [VcXsrv](https://github.com/marchaesen/vcxsrv) — the open
 
 - **Relative mouse mode & cursor confinement** — hardware-level `XI_RawMotion` plus proper `XGrabPointer` confinement and hiding, **so SDL/SDL2 games, emulators, and 3D/CAD tools capture the mouse correctly**. Broken relative mouse mode is a long-standing WSL pain point — including on WSLg ([microsoft/wslg#240](https://github.com/microsoft/wslg/issues/240), [#521](https://github.com/microsoft/wslg/issues/521)) and X410.
 
-All patches are submitted upstream as proper PRs to [marchaesen/vcxsrv](https://github.com/marchaesen/vcxsrv) (PR #78; Issue #80 with a PR to follow). Upstream releases roughly once a year, so this project provides builds in the meantime — each patch is retired once it lands upstream.
+All patches are submitted upstream as proper PRs to [marchaesen/vcxsrv](https://github.com/marchaesen/vcxsrv) (PR #78; PR #81). Upstream releases roughly once a year, so this project provides builds in the meantime — each patch is retired once it lands upstream.
 
-[Releases](../../releases) · [Upstream PR #78](https://github.com/marchaesen/vcxsrv/pull/78) · [Issue #77](https://github.com/marchaesen/vcxsrv/issues/77) · [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80)
+[Releases](../../releases) · [Upstream PR #78](https://github.com/marchaesen/vcxsrv/pull/78) · [Issue #77](https://github.com/marchaesen/vcxsrv/issues/77) · [PR #81](https://github.com/marchaesen/vcxsrv/pull/81) · [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80)
 
 ---
 
@@ -55,7 +55,7 @@ Nothing here replaces what WSLg or X410 already do well — the point is that a 
 | **Raw Input mouse** | XInput2 `XI_RawMotion` never generated; SDL2 relative mouse mode broken | [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes.1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix) |
 | **Cursor confinement & hiding** | `XGrabPointer` with `confineTo` has no effect; cursor stays visible and free | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes.1](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-SDL2-Relative-Mouse-Mode-Fix) |
 | **Empty-mask cursor hiding** | `XDefineCursor` with an all-zero-mask cursor left the previous cursor image on screen (cursor never hidden) | Same [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) — Open | [Implementation Notes.2](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-Empty-Cursor-Hide-Fix) |
-| **WSL2 vsock transport** | zero-config listener for WSL2; upstream hyperv listener never matches WSL2's VM; display number ignored on bind | [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) — Open, PR to follow | [Implementation Notes.3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-Fix) |
+| **WSL2 vsock transport** | zero-config listener for WSL2; upstream hyperv listener never matches WSL2's VM; display number ignored on bind | [PR #81](https://github.com/marchaesen/vcxsrv/pull/81) — Open | [Implementation Notes.3](https://github.com/vivimillin/vcxsrv/wiki/VcXsrv-WSL2-vsock-Fix) |
 
 > Unofficial builds are on the [Releases page](../../releases); each release lists exactly which patches it contains. In-depth design and implementation write-ups for each patch set are in the wiki, linked in the **Notes** column above.
 
@@ -114,7 +114,7 @@ vsock transport (Windows 11 + Store WSL2, Ubuntu):
 The most useful thing you can do — more than starring this repo — is to test the upstream submissions and leave your results there:
 
 - [PR #78](https://github.com/marchaesen/vcxsrv/pull/78) (mouse patches) and [Issue #77](https://github.com/marchaesen/vcxsrv/issues/77)
-- [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80) (vsock transport)
+- [PR #81](https://github.com/marchaesen/vcxsrv/pull/81) (vsock transport) and [Issue #80](https://github.com/marchaesen/vcxsrv/issues/80)
 
 Confirmed test reports from real users are what moves long-running PRs forward, and once merged, everyone gets these fixes in the official builds. Bugs specific to these unofficial builds can be reported in this repo's issue tracker.
 
@@ -131,7 +131,7 @@ Confirmed test reports from real users are what moves long-running PRs forward, 
 - [x] AF_VSOCK transport — zero-config, self-healing WSL2 VM↔host channel
 
 **In progress / Planned**
-- [ ] Upstream merge of PR #78; vsock PR following Issue #80
+- [ ] Upstream merge of PR #78 and PR #81
 - [ ] Clipboard improvements — smoother bidirectional text/image sharing between Windows host and X11 clients
 
 ---
@@ -141,7 +141,7 @@ Confirmed test reports from real users are what moves long-running PRs forward, 
 - **Clone the branch with the patches you want**
 
    ```bash
-   # WSL2 vsock transport & Mouse patches (Issue #80 & PR #78)
+   # WSL2 vsock transport & Mouse patches (PR #81 & PR #78)
    git clone -b feature/vsock-wsl2 https://github.com/vivimillin/vcxsrv.git
 
    # Mouse patches only (PR #78)
@@ -159,7 +159,7 @@ Confirmed test reports from real users are what moves long-running PRs forward, 
 | `master` | Clean mirror of upstream | No  |
 | `pages` | GitHub homepage, this README + upstream source | **Yes** |
 | `feature/raw-input-mouse` | PR #78 code | No  |
-| `feature/vsock-wsl2` | vsock transport code (Issue #80) | No  |
+| `feature/vsock-wsl2` | PR #81 code | No  |
 
 `master` tracks upstream via `reset --hard` and carries no local commits. All project-specific content lives on `pages`.
 
